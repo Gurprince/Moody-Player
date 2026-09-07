@@ -1,0 +1,64 @@
+.home-intro {
+  max-width: 52rem;
+  padding-bottom: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.home-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 23rem) minmax(0, 1fr);
+  gap: clamp(1.75rem, 4vw, 3.25rem);
+  align-items: start;
+}
+
+.home-instrument {
+  position: sticky;
+  top: 6.5rem;
+}
+
+.home-results {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3rem);
+  min-width: 0;
+}
+
+.home-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.home-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-block .mood-picker {
+  margin-top: 1.25rem;
+}
+
+.home-block .note,
+.home-block .blank {
+  margin-top: 1.5rem;
+}
+
+.home-mood-note {
+  margin-top: 1.1rem;
+  font-size: var(--small);
+  color: var(--thread-faint);
+}
+
+@media (max-width: 60rem) {
+  .home-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-instrument {
+    position: static;
+    max-width: 34rem;
+  }
+}

@@ -1,0 +1,43 @@
+.upload-head {
+  max-width: 52rem;
+  padding-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+.upload-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
+  gap: clamp(1.75rem, 4vw, 3.25rem);
+  align-items: start;
+}
+
+.upload-aside {
+  padding-top: 0.25rem;
+}
+
+.upload-facts {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 1.1rem;
+  max-width: 34ch;
+}
+
+.upload-facts dt {
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--floss);
+  transition: color 400ms ease;
+}
+
+.upload-facts dd {
+  margin-top: 0.2rem;
+  font-size: var(--small);
+  line-height: 1.6;
+  color: var(--thread-dim);
+}
+
+@media (max-width: 56rem) {
+  .upload-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

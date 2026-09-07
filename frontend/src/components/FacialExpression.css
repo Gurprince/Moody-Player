@@ -1,0 +1,153 @@
+.instrument {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------------- viewfinder ---------------- */
+
+.viewfinder {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ground-deep);
+  border: 1px solid var(--rule-strong);
+  overflow: hidden;
+}
+
+.viewfinder-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  filter: saturate(0.72) contrast(1.06);
+}
+
+.viewfinder[data-state='starting'] .viewfinder-feed,
+.viewfinder[data-state='blocked'] .viewfinder-feed {
+  visibility: hidden;
+}
+
+.viewfinder-status {
+  position: absolute;
+  inset: auto 1.25rem 1.25rem;
+  font-size: var(--small);
+  line-height: 1.55;
+  color: var(--thread-dim);
+  max-width: 32ch;
+}
+
+.viewfinder-status-stop {
+  color: var(--thread);
+  border-left: 3px solid var(--stop);
+  padding-left: 0.75rem;
+}
+
+/* Corner ticks — registration marks on an instrument, not a scanning box. */
+.viewfinder-frame i {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--floss);
+  opacity: 0.5;
+  transition: opacity 260ms ease, border-color 500ms ease;
+}
+
+.viewfinder-frame i:nth-child(1) {
+  top: 12px;
+  left: 12px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.viewfinder-frame i:nth-child(2) {
+  top: 12px;
+  right: 12px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.viewfinder-frame i:nth-child(3) {
+  bottom: 12px;
+  left: 12px;
+  border-right: 0;
+  border-top: 0;
+}
+.viewfinder-frame i:nth-child(4) {
+  bottom: 12px;
+  right: 12px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.viewfinder-frame[data-reading='true'] i {
+  opacity: 1;
+}
+
+.read-button {
+  justify-content: flex-start;
+  padding: 0.9rem 1.25rem;
+}
+
+/* ---------------- readout ---------------- */
+
+.readout {
+  border-top: 1px solid var(--rule);
+  padding-top: 0.9rem;
+}
+
+.readout-caption {
+  margin-bottom: 0.7rem;
+}
+
+.readout-rows {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.readout-row {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.readout-row dt {
+  font-size: var(--small);
+  color: var(--thread-faint);
+}
+
+.readout-row[data-top='true'] dt {
+  color: var(--thread);
+  font-weight: 600;
+}
+
+.readout-row dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.25rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.readout-track {
+  height: 6px;
+  background: rgba(240, 227, 210, 0.08);
+}
+
+.readout-fill {
+  display: block;
+  height: 100%;
+  background: var(--floss-deep);
+  transition: width 500ms cubic-bezier(0.22, 0.61, 0.36, 1), background 400ms ease;
+}
+
+.readout-row[data-top='true'] .readout-fill {
+  background: var(--floss);
+}
+
+.readout-value {
+  font-size: var(--micro);
+  color: var(--thread-faint);
+  text-align: right;
+}
+
+.readout-row[data-top='true'] .readout-value {
+  color: var(--thread-dim);
+}

@@ -1,0 +1,116 @@
+.upload-form {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  background: var(--cloth);
+  border: 1px solid var(--rule-strong);
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--thread-dim);
+  padding: 0;
+}
+
+.upload-form input[type='text'] {
+  padding: 0.7rem 0.75rem;
+  font-size: var(--base);
+  color: var(--thread);
+  background: var(--ground-deep);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+.upload-form input::placeholder {
+  color: var(--thread-faint);
+}
+
+.upload-form input[type='text']:focus {
+  outline: 2px solid var(--floss);
+  outline-offset: -2px;
+  border-color: transparent;
+}
+
+.upload-form input[type='file'] {
+  padding: 0.5rem;
+  font-size: var(--small);
+  color: var(--thread-faint);
+  background: var(--ground-deep);
+  border: 1px solid var(--rule);
+}
+
+.upload-form input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--thread);
+  background: var(--cloth-raised);
+  border: 1px solid var(--rule-strong);
+  cursor: pointer;
+}
+
+/* ---------------- mood radios ---------------- */
+
+.mood-radios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+
+.mood-radio {
+  display: block;
+  background: var(--ground-deep);
+  cursor: pointer;
+}
+
+.mood-radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mood-radio span {
+  display: block;
+  padding: 0.6rem 0.7rem;
+  font-size: var(--small);
+  font-weight: 600;
+  color: var(--thread-faint);
+  border-top: 3px solid transparent;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.mood-radio:hover span {
+  color: var(--thread-dim);
+  background: var(--cloth);
+}
+
+.mood-radio input:checked + span {
+  color: var(--floss);
+  background: var(--floss-deep);
+  border-top-color: var(--floss);
+}
+
+.mood-radio input:focus-visible + span {
+  outline: 2px solid var(--floss);
+  outline-offset: -2px;
+}
+
+.upload-submit {
+  justify-content: flex-start;
+}

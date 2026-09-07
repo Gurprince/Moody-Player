@@ -1,0 +1,89 @@
+.saved-head {
+  max-width: 52rem;
+  padding-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+.saved-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 19rem);
+  gap: clamp(1.75rem, 4vw, 3.25rem);
+  align-items: start;
+}
+
+.saved-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.saved-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.saved-tracks .blank,
+.saved-history .blank {
+  margin-top: 1.5rem;
+}
+
+.blank-small {
+  font-size: var(--base);
+}
+
+/* ---------------- readings ---------------- */
+
+.history {
+  margin-top: 0.5rem;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.history-mood {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--base);
+  font-weight: 600;
+  color: var(--floss);
+}
+
+.history-mood:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.history-swatch {
+  width: 18px;
+  height: 10px;
+}
+
+.history-when {
+  font-size: var(--micro);
+  color: var(--thread-faint);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.history-how {
+  grid-column: 1 / -1;
+  font-size: var(--micro);
+  letter-spacing: 0.04em;
+  color: var(--thread-faint);
+}
+
+@media (max-width: 60rem) {
+  .saved-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

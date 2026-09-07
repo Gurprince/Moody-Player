@@ -1,0 +1,63 @@
+/* Each chip carries its own data-mood, so the [data-mood] rules in
+   index.css scope that mood's floss colour to the chip itself. */
+
+.mood-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+
+.mood-chip {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem 1.1rem;
+  text-align: left;
+  background: var(--cloth);
+  transition: background 200ms ease;
+}
+
+.mood-chip:hover:not(:disabled) {
+  background: var(--cloth-raised);
+}
+
+.mood-chip:disabled {
+  opacity: 0.5;
+}
+
+.mood-chip[data-on='true'] {
+  background: linear-gradient(180deg, var(--floss-deep), var(--cloth) 90%);
+}
+
+.mood-chip-swatch {
+  display: block;
+  height: 12px;
+  opacity: 0.55;
+  transition: opacity 200ms ease;
+}
+
+.mood-chip:hover .mood-chip-swatch,
+.mood-chip[data-on='true'] .mood-chip-swatch {
+  opacity: 1;
+}
+
+.mood-chip-name {
+  font-size: var(--mid);
+  font-weight: 700;
+  font-variation-settings: 'wdth' 112;
+  line-height: 1.1;
+  color: var(--thread-dim);
+  transition: color 200ms ease;
+}
+
+.mood-chip:hover .mood-chip-name,
+.mood-chip[data-on='true'] .mood-chip-name {
+  color: var(--floss);
+}
+
+.mood-chip-line {
+  font-size: var(--small);
+  line-height: 1.5;
+  color: var(--thread-faint);
+}

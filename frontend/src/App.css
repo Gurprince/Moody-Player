@@ -1,0 +1,89 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell[data-docked='true'] {
+  padding-bottom: var(--dock);
+}
+
+.shell-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* ---------------- colophon ---------------- */
+
+.colophon {
+  width: 100%;
+  margin-top: clamp(3.5rem, 8vw, 6rem);
+  border-top: 1px solid var(--rule);
+}
+
+.colophon-inner {
+  width: 100%;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: clamp(2rem, 4vw, 2.75rem) var(--gutter) clamp(2rem, 4vw, 3rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 12rem) minmax(0, 12rem);
+  gap: 2rem;
+  align-items: start;
+}
+
+.colophon-mark {
+  font-size: var(--base);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 116;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--thread-dim);
+}
+
+.colophon-note {
+  margin-top: 0.6rem;
+  font-size: var(--small);
+  line-height: 1.7;
+  color: var(--thread-faint);
+  max-width: 52ch;
+}
+
+.colophon-nav {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.colophon-nav .micro {
+  margin-bottom: 0.15rem;
+  color: var(--thread-faint);
+}
+
+.colophon-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--small);
+  color: var(--thread-dim);
+  transition: color 180ms ease;
+}
+
+.colophon-nav a:hover {
+  color: var(--thread);
+}
+
+.colophon-swatch {
+  width: 16px;
+  height: 9px;
+}
+
+@media (max-width: 52rem) {
+  .colophon-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .colophon-lead {
+    grid-column: 1 / -1;
+  }
+}
