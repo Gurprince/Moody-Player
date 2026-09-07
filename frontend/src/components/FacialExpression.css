@@ -41,7 +41,8 @@
   transform: scaleX(-1);
 }
 
-.lens[data-state='starting'] .lens-feed,
+.lens[data-state='off'] .lens-feed,
+.lens[data-state='opening'] .lens-feed,
 .lens[data-state='blocked'] .lens-feed {
   visibility: hidden;
 }
@@ -159,13 +160,45 @@
   transition: stroke-dashoffset 240ms linear;
 }
 
-.lens-faces {
+/* the camera announces itself whenever it is actually open */
+.lens-live {
   position: absolute;
   left: 50%;
   bottom: -0.6rem;
   transform: translateX(-50%);
   z-index: 2;
   white-space: nowrap;
+  color: var(--ink);
+}
+
+.lens-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: lens-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes lens-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.lens-idle {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  color: var(--ink-3);
+}
+
+.lens-idle p {
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 /* ---------------- actions ---------------- */

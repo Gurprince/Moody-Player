@@ -36,9 +36,9 @@ client.interceptors.request.use((config) => {
 export const MOODS = ["happy", "sad", "angry", "neutral"];
 
 export const MOOD_COPY = {
-  happy: { line: "Bhangra and party sets, for when the volume should go up." },
-  sad: { line: "Slow Punjabi ballads, for when the room has gone quiet." },
-  angry: { line: "Punjabi rap with its teeth out." },
+  happy: { line: "Loud and upbeat, for when the volume should go up." },
+  sad: { line: "Slow and heavy, for when the room has gone quiet." },
+  angry: { line: "Sharp and hard, with its teeth out." },
   neutral: { line: "An even mix that doesn't push you either way." },
 };
 
@@ -57,9 +57,10 @@ export function describeBlend(blend) {
 
 /**
  * Tracks for a reading. Pass the full score distribution and the server
- * builds a blended playlist; pass a single mood for the plain version.
+ * builds a blended playlist; pass a single mood for the plain version. A
+ * typed `feeling` overrides both — the words become the search.
  */
-export async function fetchMoodSongs(mood, scores) {
+export async function fetchMoodSongs(mood, scores, taste = {}) {
   const params = { limit: 24 };
   if (scores) {
     const blend = MOODS.filter((m) => (scores[m] || 0) >= 0.08)
@@ -68,18 +69,42 @@ export async function fetchMoodSongs(mood, scores) {
     if (blend) params.blend = blend;
   }
   if (!params.blend) params.mood = mood;
+  if (taste.language) params.lang = taste.language;
+  if (taste.genre && taste.genre !== "any") params.genre = taste.genre;
+  if (taste.feeling) params.feeling = taste.feeling;
 
   const { data } = await client.get("/songs", { params });
   return {
     songs: Array.isArray(data.songs) ? data.songs : [],
+    // typed words decide their own mood, so the server's answer wins
+    mood: data.mood || null,
     blend: data.blend || null,
+    language: data.language || null,
+    genre: data.genre || null,
+    feeling: data.feeling || null,
     source: data.source || null,
     personalised: Boolean(data.personalised),
   };
 }
 
-export async function fetchLibrary({ q = "", mood = "", page = 1 } = {}) {
-  const { data } = await client.get("/library", { params: { q, mood, page } });
+/** The languages, genres and feeling words the server can work with. */
+export async function fetchOptions() {
+  const { data } = await client.get("/options");
+  return {
+    languages: data.languages || [],
+    genres: data.genres || [],
+    feelings: data.feelings || [],
+  };
+}
+
+export function pushPrefs(prefs) {
+  return client.put("/me/prefs", prefs);
+}
+
+export async function fetchLibrary({ q = "", mood = "", lang = "", page = 1 } = {}) {
+  const { data } = await client.get("/library", {
+    params: { q, mood, lang, page },
+  });
   return {
     songs: Array.isArray(data.songs) ? data.songs : [],
     total: data.total || 0,

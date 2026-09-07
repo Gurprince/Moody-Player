@@ -11,6 +11,7 @@ const songSchema = new mongoose.Schema(
     // where the row came from, so a provider can be re-crawled or retired
     source: { type: String, default: "upload" },
     sourceId: String,
+    language: { type: String, default: "punjabi" },
     durationMs: Number,
     genre: String,
 
@@ -21,6 +22,7 @@ const songSchema = new mongoose.Schema(
 );
 
 songSchema.index({ mood: 1, audio: 1 });
+songSchema.index({ language: 1, mood: 1 });
 songSchema.index({ title: "text", artist: "text" });
 songSchema.index({ source: 1, sourceId: 1 });
 

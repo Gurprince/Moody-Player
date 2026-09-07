@@ -3,12 +3,24 @@ import { Link } from "react-router-dom";
 import FacialExpression from "../components/FacialExpression.jsx";
 import MoodPicker from "../components/MoodPicker.jsx";
 import TrackList, { TrackListSkeleton } from "../components/TrackList.jsx";
+import TasteBar from "../components/TasteBar.jsx";
 import { usePlayer } from "../context/usePlayer.js";
 import { fetchMoodSongs, readError, describeBlend, MOOD_COPY } from "../api.js";
 import "./Home.css";
 
 const Home = () => {
-  const { mood, setMood, recordReading, play, enqueue, track } = usePlayer();
+  const {
+    mood,
+    setMood,
+    recordReading,
+    play,
+    enqueue,
+    track,
+    language,
+    genre,
+    setLanguage,
+    setGenre,
+  } = usePlayer();
   const [songs, setSongs] = useState([]);
   const [blend, setBlend] = useState(null);
   const [personalised, setPersonalised] = useState(false);
@@ -16,6 +28,7 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [source, setSource] = useState(null); // camera | picked | ambient
   const [drift, setDrift] = useState(null);
+  const [feeling, setFeeling] = useState(null);
   const restored = useRef(false);
   const playingRef = useRef(false);
 
@@ -29,8 +42,18 @@ const Home = () => {
       setSource(how);
       setFetching(true);
       setError(null);
+      if (how !== "feeling") setFeeling(null);
       try {
-        const result = await fetchMoodSongs(nextMood, scores);
+        const result = await fetchMoodSongs(nextMood, scores, {
+          language,
+          genre,
+          feeling: meta.feeling,
+        });
+        if (result.feeling) setFeeling(result.feeling);
+        /* A typed feeling works out its own mood — adopt it so the whole
+           site tints to what the words actually meant. */
+        const settled = result.mood || nextMood;
+        if (settled !== nextMood) setMood(settled);
         setSongs(result.songs);
         setBlend(result.blend);
         setPersonalised(result.personalised);
@@ -53,7 +76,7 @@ const Home = () => {
         /* Re-cueing a remembered mood on load isn't a new reading. */
         if (how !== "restored") {
           recordReading({
-            mood: nextMood,
+            mood: settled,
             how,
             scores: scores || null,
             found: result.songs.length,
@@ -73,7 +96,7 @@ const Home = () => {
         setFetching(false);
       }
     },
-    [recordReading, setMood, enqueue]
+    [recordReading, setMood, enqueue, language, genre]
   );
 
   /* The site remembers the last mood, so come back with it already cued. */
@@ -83,10 +106,28 @@ const Home = () => {
     load(mood, "restored");
   }, [mood, load]);
 
+  /* Changing language or genre re-cues straight away — waiting for another
+     read would make the picker feel broken. */
+  const firstTaste = useRef(true);
+  useEffect(() => {
+    if (firstTaste.current) {
+      firstTaste.current = false;
+      return;
+    }
+    if (!mood) return;
+    if (feeling?.text) load(mood, "feeling", null, { feeling: feeling.text });
+    else load(mood, source === "camera" ? "camera" : "picked");
+  }, [language, genre]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleRead = useCallback(
     (nextMood, scores, meta) =>
       load(nextMood, meta?.ambient ? "ambient" : "camera", scores, meta),
     [load]
+  );
+
+  const handleFeeling = useCallback(
+    (text) => load(mood || "neutral", "feeling", null, { feeling: text }),
+    [load, mood]
   );
 
   const blendLine = describeBlend(blend);
@@ -114,10 +155,19 @@ const Home = () => {
             disabled={fetching}
           />
 
+          <TasteBar
+            language={language}
+            genre={genre}
+            onLanguage={setLanguage}
+            onGenre={setGenre}
+            onFeeling={handleFeeling}
+            busy={fetching}
+          />
+
           <p className="stage-note">
             {mood
               ? MOOD_COPY[mood].line
-              : "Look at the camera, or pick a mood by hand."}
+              : "Look at the camera, pick a mood, or just say how you feel."}
           </p>
         </div>
       </section>
@@ -125,7 +175,11 @@ const Home = () => {
       <section className="page cued">
         <div className="section-head">
           <h2 className="display-sm">
-            {mood ? (
+            {feeling ? (
+              <>
+                Cued for <span className="tint">{feeling.text}</span>
+              </>
+            ) : mood ? (
               <>
                 Cued for <span className="tint">{mood}</span>
               </>
@@ -149,10 +203,19 @@ const Home = () => {
           )}
         </div>
 
-        {!fetching && (mixed || source === "camera" || personalised || drift) && (
+        {!fetching && songs.length > 0 && (
           <div className="cue-facts">
+            {feeling && (
+              <span className="tag tag-live">
+                {feeling.understood
+                  ? `Your words: ${feeling.matched.join(", ")}`
+                  : `Searched “${feeling.text}”`}
+              </span>
+            )}
             {mixed && <span className="tag">Mixed {blendLine}</span>}
             {source === "camera" && <span className="tag">From your face</span>}
+            <span className="tag">{language}</span>
+            {genre !== "any" && <span className="tag">{genre}</span>}
             {source === "ambient" && <span className="tag">Ambient read</span>}
             {personalised && <span className="tag">Tuned to your skips</span>}
             {drift && <span className="tag tag-live">{drift}</span>}

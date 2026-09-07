@@ -9,6 +9,14 @@ const {
   tracksForMood,
   tracksForBlend,
 } = require("../service/catalog.service");
+const {
+  LANGUAGES,
+  GENRES,
+  FEELING_HINTS,
+  readFeeling,
+  languageList,
+  genreList,
+} = require("../service/taste");
 const { rank, trackKey } = require("../service/ranking.service");
 const { sourceHealth } = require("../service/sources");
 const rateLimit = require("../middleware/rateLimit");
@@ -50,19 +58,29 @@ router.get(
   rateLimit({ windowMs: 60_000, max: 40, name: "search" }),
   async (req, res) => {
     try {
-      const blend = parseBlend(req.query.blend);
+      const feeling = readFeeling(req.query.feeling);
+      /* A typed feeling that maps onto known words becomes the blend; one
+         that doesn't still shapes the search, it just can't claim a mood. */
+      const blend = parseBlend(req.query.blend) || feeling?.weights || null;
       const { mood } = req.query;
 
       if (!blend && !MOODS.includes(mood)) {
         return res.status(400).json({
-          message: "Pass mood=happy|sad|angry|neutral, or blend=mood:weight,…",
+          message:
+            "Pass mood=happy|sad|angry|neutral, blend=mood:weight,… or feeling=…",
         });
       }
 
-      const limit = Math.min(Number(req.query.limit) || 24, 40);
+      const options = {
+        limit: Math.min(Number(req.query.limit) || 24, 40),
+        language: LANGUAGES[req.query.lang] ? req.query.lang : "punjabi",
+        genre: GENRES[req.query.genre] ? req.query.genre : "any",
+        feeling,
+      };
+
       const result = blend
-        ? await tracksForBlend(blend, { limit })
-        : await tracksForMood(mood, { limit });
+        ? await tracksForBlend(blend, options)
+        : await tracksForMood(mood, options);
 
       const topMood = blend
         ? Object.entries(blend).sort((a, b) => b[1] - a[1])[0][0]
@@ -77,6 +95,11 @@ router.get(
         songs: ranked.tracks,
         mood: topMood,
         blend: result.blend || null,
+        language: result.language,
+        genre: result.genre,
+        feeling: feeling
+          ? { text: feeling.text, matched: feeling.matched, understood: Boolean(feeling.weights) }
+          : null,
         source: result.source,
         cached: Boolean(result.cached),
         personalised: ranked.personalised,
@@ -93,12 +116,13 @@ router.get(
    ------------------------------------------------------------------ */
 router.get("/library", async (req, res) => {
   try {
-    const { q = "", mood = "" } = req.query;
+    const { q = "", mood = "", lang = "" } = req.query;
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 24, 1), 60);
 
     const filter = { ...PLAYABLE };
     if (MOODS.includes(mood)) filter.mood = mood;
+    if (LANGUAGES[lang]) filter.language = lang;
     if (q.trim()) {
       const rx = new RegExp(escapeRegex(q.trim()), "i");
       filter.$or = [{ title: rx }, { artist: rx }];
@@ -145,6 +169,17 @@ router.get("/moods", async (req, res) => {
     console.error("[/moods]", err.message);
     res.status(500).json({ message: "Couldn't count the library." });
   }
+});
+
+/* ------------------------------------------------------------------
+   GET /options — the languages, genres and feeling words on offer
+   ------------------------------------------------------------------ */
+router.get("/options", (req, res) => {
+  res.status(200).json({
+    languages: languageList(),
+    genres: genreList(),
+    feelings: FEELING_HINTS,
+  });
 });
 
 /* ------------------------------------------------------------------

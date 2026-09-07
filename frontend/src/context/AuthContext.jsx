@@ -30,7 +30,13 @@ export function AuthProvider({ children }) {
       .then((data) => {
         if (cancelled) return;
         setUser(data.user);
-        if (data.user) setRemote({ saved: data.saved, readings: data.readings });
+        if (data.user) {
+          setRemote({
+            saved: data.saved,
+            readings: data.readings,
+            prefs: data.user.prefs,
+          });
+        }
       })
       .catch(() => {
         /* server down — the app still works signed out */
@@ -47,7 +53,11 @@ export function AuthProvider({ children }) {
       const local = localCollection();
       const data = await authenticate(mode, { email, password, ...local });
       setUser(data.user);
-      setRemote({ saved: data.saved, readings: data.readings });
+      setRemote({
+        saved: data.saved,
+        readings: data.readings,
+        prefs: data.user?.prefs,
+      });
       setMigrated(data.migrated || null);
       return { ok: true, migrated: data.migrated };
     } catch (err) {

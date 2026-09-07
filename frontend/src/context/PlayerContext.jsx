@@ -7,7 +7,13 @@ import React, {
 } from "react";
 import { PlayerContext } from "./usePlayer.js";
 import useStoredState from "../hooks/useStoredState.js";
-import { trackKey, sendSignal, pushSaved, pushReadings } from "../api.js";
+import {
+  trackKey,
+  sendSignal,
+  pushSaved,
+  pushReadings,
+  pushPrefs,
+} from "../api.js";
 import { useAuth } from "./authContext.js";
 
 const REPEAT_STATES = ["off", "all", "one"];
@@ -47,6 +53,8 @@ export function PlayerProvider({ children }) {
   const [saved, setSaved] = useStoredState("mp:saved", []);
   const [history, setHistory] = useStoredState("mp:history", []);
   const [mood, setMood] = useStoredState("mp:mood", null);
+  const [language, setLanguage] = useStoredState("mp:language", "punjabi");
+  const [genre, setGenre] = useStoredState("mp:genre", "any");
 
   const track = cursor >= 0 ? queue[order[cursor]] : null;
 
@@ -74,7 +82,17 @@ export function PlayerProvider({ children }) {
     hydrating.current = true;
     setSaved(Array.isArray(remote.saved) ? remote.saved : []);
     setHistory(Array.isArray(remote.readings) ? remote.readings : []);
-  }, [remote, setSaved, setHistory]);
+    if (remote.prefs?.language) setLanguage(remote.prefs.language);
+    if (remote.prefs?.genre) setGenre(remote.prefs.genre);
+  }, [remote, setSaved, setHistory, setLanguage, setGenre]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const timer = setTimeout(() => {
+      pushPrefs({ language, genre }).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [language, genre, user]);
 
   useEffect(() => {
     if (hydrating.current) {
@@ -418,6 +436,10 @@ export function PlayerProvider({ children }) {
     saved,
     history,
     mood,
+    language,
+    genre,
+    setLanguage,
+    setGenre,
     user,
     play,
     playTrack,

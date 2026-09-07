@@ -1,0 +1,163 @@
+.taste {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 30rem;
+}
+
+.taste-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* ---------------- pickers ---------------- */
+
+.taste-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--pill);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-3);
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.taste-select:hover {
+  color: var(--ink-2);
+  background: var(--panel-hi);
+  border-color: var(--line-hi);
+}
+
+.taste-select:focus-within {
+  border-color: var(--line-hi);
+}
+
+.taste-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: none;
+  padding-right: 0.85rem;
+  font-size: var(--small);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.taste-select select:focus {
+  outline: none;
+}
+
+.taste-select select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* the options list is drawn by the OS, so it needs its own colours */
+.taste-select option {
+  background: #141414;
+  color: var(--ink);
+}
+
+/* a small chevron, since the native one is hidden */
+.taste-select::after {
+  content: '';
+  position: absolute;
+  right: 0.85rem;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--ink-3);
+  border-bottom: 1.5px solid var(--ink-3);
+  transform: translateY(-2px) rotate(45deg);
+  pointer-events: none;
+}
+
+/* ---------------- your own words ---------------- */
+
+.taste-feeling {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.3rem 0.3rem 0.3rem 1rem;
+  border-radius: var(--pill);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.taste-feeling:focus-within {
+  border-color: var(--line-hi);
+  background: var(--panel-hi);
+}
+
+.taste-feeling input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-size: var(--small);
+  color: var(--ink);
+}
+
+.taste-feeling input::placeholder {
+  color: var(--ink-3);
+}
+
+.taste-feeling input:focus {
+  outline: none;
+}
+
+.taste-go {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #000;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.taste-go:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.taste-go:disabled {
+  background: var(--panel-hi);
+  color: var(--ink-3);
+}
+
+/* ---------------- suggestions ---------------- */
+
+.taste-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 0.5rem;
+}
+
+.taste-hints button {
+  font-size: var(--micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  border-bottom: 1px solid transparent;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.taste-hints button:hover:not(:disabled) {
+  color: var(--ink);
+  border-bottom-color: var(--line-hi);
+}
+
+.taste-hints button:disabled {
+  opacity: 0.4;
+}

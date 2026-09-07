@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FiUsers, FiRadio } from "react-icons/fi";
+import { FiUsers, FiRadio, FiCamera, FiCameraOff } from "react-icons/fi";
 import { Rings } from "./Chrome.jsx";
 import { loadReader, readFace, MOODS, moodDistance } from "../lib/faceReader.js";
 import useStoredState from "../hooks/useStoredState.js";
@@ -28,10 +28,11 @@ const Countdown = ({ until }) => {
 
 const FacialExpression = ({ onRead, fetching, mood, children }) => {
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const abortRef = useRef(null);
   const lastScores = useRef(null);
 
-  const [phase, setPhase] = useState("starting"); // starting | live | blocked
+  const [phase, setPhase] = useState("off"); // off | opening | live | blocked
   const [reading, setReading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [notice, setNotice] = useState(null);
@@ -44,44 +45,70 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
 
   const busy = reading || fetching;
 
-  useEffect(() => {
-    let stream;
-    let cancelled = false;
+  /* The camera is only ever on while it is being used. Nothing opens it on
+     page load, and it closes again the moment a read is finished — unless
+     ambient mode is deliberately watching. */
 
-    (async () => {
-      try {
-        await loadReader();
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Camera setup failed:", err);
-        setPhase("blocked");
-        setNotice(
-          err?.name === "NotAllowedError" || err?.name === "NotFoundError"
-            ? "Camera access is off. Turn it on for this site, or pick a mood below."
-            : "The camera or the detection models didn't load. Pick a mood below."
-        );
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      abortRef.current?.abort();
-      stream?.getTracks().forEach((t) => t.stop());
-    };
+  const closeCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setPhase((current) => (current === "blocked" ? current : "off"));
   }, []);
 
-  const run = useCallback(
-    async ({ silent = false } = {}) => {
+  const openCamera = useCallback(async () => {
+    if (streamRef.current) return true;
+    setPhase("opening");
+    setNotice(null);
+    try {
+      await loadReader();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      return true;
+    } catch (err) {
+      console.error("Camera setup failed:", err);
+      setPhase("blocked");
+      setNotice(
+        err?.name === "NotAllowedError" || err?.name === "NotFoundError"
+          ? "Camera access is off. Turn it on for this site, or pick a mood below."
+          : "The camera or the detection models didn't load. Pick a mood below."
+      );
+      return false;
+    }
+  }, []);
+
+  /** Waits for the first decodable frame, so a read never samples a blank. */
+  const waitForFrame = useCallback(async () => {
+    const started = Date.now();
+    while (Date.now() - started < 6000) {
       const video = videoRef.current;
-      if (!video || video.readyState < 2) return null;
+      if (video && video.readyState >= 2 && video.videoWidth > 0) return true;
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    return false;
+  }, []);
+
+  // stop the camera if the component goes away mid-read
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    },
+    []
+  );
+
+  const run = useCallback(
+    async ({ silent = false, keepOpen = false } = {}) => {
+      if (!(await openCamera())) return null;
+      if (!(await waitForFrame())) {
+        if (!silent) setNotice("The camera didn't start in time. Try again.");
+        if (!keepOpen && !ambient) closeCamera();
+        return null;
+      }
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -89,7 +116,7 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
       if (!silent) setNotice(null);
 
       try {
-        const result = await readFace(video, {
+        const result = await readFace(videoRef.current, {
           room,
           signal: controller.signal,
           onProgress: setProgress,
@@ -120,22 +147,28 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
         setReading(false);
         setProgress(null);
         abortRef.current = null;
+        if (!keepOpen && !ambient) closeCamera();
       }
     },
-    [onRead, room]
+    [ambient, closeCamera, onRead, openCamera, room, waitForFrame]
   );
 
-  /* Ambient mode keeps looking, and only disturbs the queue once the face
-     has actually moved on. */
+  /* Ambient mode is the one case where the camera stays on — and it says so
+     the whole time it is watching. */
   useEffect(() => {
-    if (!ambient || phase !== "live") {
+    if (!ambient) {
       setNextAt(null);
+      if (!reading) closeCamera();
       return undefined;
     }
 
-    setNextAt(Date.now() + AMBIENT_EVERY_MS);
+    let cancelled = false;
+    openCamera().then((ok) => {
+      if (!cancelled && ok) setNextAt(Date.now() + AMBIENT_EVERY_MS);
+    });
+
     const timer = setInterval(async () => {
-      if (document.hidden) return;
+      if (document.hidden || !streamRef.current) return;
       const before = lastScores.current;
       const result = await readFace(videoRef.current, { room }).catch(() => null);
       if (!result?.ok) return;
@@ -155,10 +188,15 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
       }
     }, AMBIENT_EVERY_MS);
 
-    return () => clearInterval(timer);
-  }, [ambient, phase, room, onRead]);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+    // `reading` is deliberately not a dependency: a read must not restart this
+  }, [ambient, room, onRead, openCamera, closeCamera]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pct = progress ? Math.min(1, progress.frames / progress.expected) : 0;
+  const cameraOn = phase === "live" || phase === "opening";
 
   return (
     <div className="reader">
@@ -173,9 +211,14 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
             playsInline
             onPlaying={() => setPhase("live")}
           />
-          {phase === "starting" && (
-            <p className="lens-status">Waking the camera</p>
+
+          {phase === "off" && (
+            <div className="lens-idle">
+              <FiCameraOff size={20} strokeWidth={1.75} aria-hidden="true" />
+              <p>Camera off</p>
+            </div>
           )}
+          {phase === "opening" && <p className="lens-status">Opening camera</p>}
           {phase === "blocked" && <p className="lens-status">No camera</p>}
 
           {reading && (
@@ -196,10 +239,10 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
           )}
         </div>
 
-        {room && faces > 0 && (
-          <span className="badge lens-faces">
-            <FiUsers size={11} strokeWidth={2} />
-            {faces} {faces === 1 ? "face" : "faces"}
+        {cameraOn && (
+          <span className="badge lens-live">
+            <i className="lens-live-dot" aria-hidden="true" />
+            {room && faces > 0 ? `${faces} in frame` : "Camera on"}
           </span>
         )}
       </div>
@@ -211,15 +254,18 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
           type="button"
           className="pill reader-button"
           onClick={() => run()}
-          disabled={busy || phase !== "live"}
+          disabled={busy}
         >
-          {reading
-            ? `Reading ${Math.round(pct * 100)}%`
-            : fetching
-            ? "Finding tracks…"
-            : mood
-            ? "Read again"
-            : "Read my mood"}
+          {reading ? (
+            `Reading ${Math.round(pct * 100)}%`
+          ) : fetching ? (
+            "Finding tracks…"
+          ) : (
+            <>
+              <FiCamera size={15} strokeWidth={2} />
+              {mood ? "Read again" : "Read my mood"}
+            </>
+          )}
         </button>
 
         <div className="reader-toggles">
@@ -240,8 +286,7 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
             data-on={ambient}
             onClick={() => setAmbient(!ambient)}
             aria-pressed={ambient}
-            disabled={phase !== "live"}
-            title="Keep reading and let the queue drift with you"
+            title="Keep watching and let the queue drift with you"
           >
             <FiRadio size={13} strokeWidth={2} />
             Ambient
@@ -249,12 +294,12 @@ const FacialExpression = ({ onRead, fetching, mood, children }) => {
         </div>
       </div>
 
-      {ambient && phase === "live" && (
-        <p className="reader-ambient">
-          Watching. The queue shifts when your face does.
-          <Countdown until={nextAt} />
-        </p>
-      )}
+      <p className="reader-ambient">
+        {ambient
+          ? "Ambient is watching — the camera stays on until you switch it off."
+          : "The camera opens for the read and closes straight after."}
+        {ambient && <Countdown until={nextAt} />}
+      </p>
 
       {notice && (
         <p

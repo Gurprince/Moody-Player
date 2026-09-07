@@ -6,10 +6,16 @@ sent to the server to look up music.
 
 ## What's in it
 
-- **Read a mood** — the camera samples ~10 frames over three seconds and averages
-  them, weighted by detector confidence, so a read reflects your face rather than
-  the instant you happened to click. A manual mood picker covers anyone who would
-  rather not turn the camera on.
+- **Read a mood** — the camera opens on the click, samples ~10 frames over three
+  seconds weighted by detector confidence, and closes again the moment it is done.
+  Nothing turns it on at page load, and only ambient mode keeps it running.
+- **Say it in your own words** — type "nostalgic", "hyped", "heartbroken" and the
+  words become the search. Known words also set the mood the site tints to; a word
+  it doesn't know still shapes the search, and it says so rather than guessing.
+- **Language and genre** — ten languages and ten genres. Storefront and query are
+  built per language, and results are re-ranked on the genre the provider reports
+  so a request for Korean never comes back Punjabi. Signed in, the choice follows
+  your account.
 - **Mood blends** — a read returns the full distribution, and a 70/20/10 result
   builds a playlist in those proportions instead of pretending the top mood is the
   only one present.
@@ -35,9 +41,16 @@ sent to the server to look up music.
 
 Sources live behind an adapter (`backend/src/service/sources/`) and are tried in
 order, falling back to the stored library when none answer. The active source is
-the iTunes Search API: no key, and an accurate Punjabi catalogue when the storefront
-is pinned to India. Its previews are 30 seconds; tracks uploaded through the app play
-in full. Adding a provider is one entry in `sources/index.js`.
+the iTunes Search API: no key, and an accurate catalogue per language once the
+storefront is pinned. Its previews are 30 seconds; tracks uploaded through the app
+play in full. Adding a provider is one entry in `sources/index.js`.
+
+Two things the provider makes you work around, both handled in `service/taste.js`:
+its search is relevance-ranked rather than filtered, so a query longer than about
+two words drifts off-language — queries stay short and walk a ladder from specific
+to loose, and results are re-ordered on the genre it reports. And the Korean
+storefront returns nothing for any query at all, so Korean is served from the US
+one.
 
 ## Stack
 
@@ -68,8 +81,10 @@ Set `VITE_API_URL` in `frontend/.env` if the API isn't on `http://localhost:3000
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| `GET` | `/songs?mood=` | Tracks for one mood |
+| `GET` | `/songs?mood=&lang=&genre=` | Tracks for one mood, language and genre |
 | `GET` | `/songs?blend=neutral:0.7,happy:0.2` | A playlist blended in those proportions |
+| `GET` | `/songs?feeling=nostalgic` | Tracks for a feeling in someone's own words |
+| `GET` | `/options` | The languages, genres and feeling words on offer |
 | `GET` | `/library?q=&mood=&page=` | The saved library, searchable and paginated |
 | `GET` | `/moods` | Track count per mood |
 | `GET` | `/health` | Which providers are answering, and library size |
@@ -82,6 +97,7 @@ Set `VITE_API_URL` in `frontend/.env` if the API isn't on `http://localhost:3000
 | `GET` | `/auth/me` | The signed-in user, with their bookmarks and journal |
 | `PUT` | `/me/saved` | Replace the account's bookmarks |
 | `PUT` | `/me/readings` | Replace the account's journal |
+| `PUT` | `/me/prefs` | Save the account's language and genre |
 
 Signed out, requests carry an `X-Client-Id` header — an anonymous per-browser id
 that personalises ranking without an account. Signing in moves those signals onto

@@ -301,4 +301,21 @@ router.put("/me/readings", requireUser, async (req, res) => {
   }
 });
 
+/** Preferences follow the account so a device change keeps your language. */
+router.put("/me/prefs", requireUser, async (req, res) => {
+  try {
+    const { language, genre } = req.body || {};
+    const prefs = { ...(req.user.prefs?.toObject?.() || req.user.prefs || {}) };
+    if (typeof language === "string") prefs.language = language;
+    if (typeof genre === "string") prefs.genre = genre;
+
+    req.user.prefs = prefs;
+    await req.user.save();
+    res.status(200).json({ prefs });
+  } catch (err) {
+    console.error("[PUT /me/prefs]", err.message);
+    res.status(500).json({ message: "Couldn't save your preferences." });
+  }
+});
+
 module.exports = router;
