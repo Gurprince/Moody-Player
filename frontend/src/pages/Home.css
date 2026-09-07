@@ -1,64 +1,48 @@
-.home-intro {
-  max-width: 52rem;
-  padding-bottom: clamp(1.75rem, 4vw, 2.75rem);
-}
+/* The hero is the instrument itself, sitting in the middle of the rings. */
 
-.home-deck {
+.stage {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 23rem) minmax(0, 1fr);
-  gap: clamp(1.75rem, 4vw, 3.25rem);
-  align-items: start;
+  place-items: center;
+  min-height: min(94vh, 54rem);
+  padding: 6rem var(--gutter) 3rem;
+  overflow: hidden;
 }
 
-.home-instrument {
-  position: sticky;
-  top: 6.5rem;
-}
-
-.home-results {
-  display: grid;
-  gap: clamp(2rem, 5vw, 3rem);
-  min-width: 0;
-}
-
-.home-block-head {
+.stage-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--rule-strong);
-}
-
-.home-block-actions {
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.75rem;
+  text-align: center;
+  max-width: 44rem;
 }
 
-.home-block .mood-picker {
-  margin-top: 1.25rem;
+.stage-title {
+  max-width: 15ch;
+  text-wrap: balance;
 }
 
-.home-block .note,
-.home-block .blank {
-  margin-top: 1.5rem;
-}
-
-.home-mood-note {
-  margin-top: 1.1rem;
+.stage-note {
   font-size: var(--small);
-  color: var(--thread-faint);
+  color: var(--ink-3);
+  max-width: 42ch;
 }
 
-@media (max-width: 60rem) {
-  .home-deck {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.cued {
+  padding-top: 0;
+}
 
-  .home-instrument {
-    position: static;
-    max-width: 34rem;
+.cued .note,
+.cued .blank {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 52rem) {
+  .stage {
+    min-height: auto;
+    padding-top: 5.5rem;
   }
 }

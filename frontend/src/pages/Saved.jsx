@@ -12,26 +12,28 @@ const Saved = () => {
 
   return (
     <div className="page saved">
-      <div className="saved-head">
-        <h1 className="page-title">Saved</h1>
-        <p className="page-lede">
-          Tracks you bookmarked, and the moods this browser has read before.
-          Both stay on this device.
-        </p>
+      <div className="page-head">
+        <div>
+          <h1 className="display">Saved</h1>
+          <p className="lede">
+            Tracks you bookmarked, and the moods this browser has read before.
+            Both stay on this device.
+          </p>
+        </div>
       </div>
 
       <div className="saved-deck">
-        <section className="saved-tracks">
-          <div className="saved-block-head">
-            <h2 className="section-title">Bookmarked tracks</h2>
+        <section>
+          <div className="section-head saved-block-head">
+            <h2 className="display-sm">Bookmarked</h2>
             {saved.length > 0 && (
-              <div className="saved-block-actions">
+              <div className="section-actions">
                 <span className="micro tnum">
                   {saved.length} {saved.length === 1 ? "track" : "tracks"}
                 </span>
                 <button
                   type="button"
-                  className="btn-quiet"
+                  className="pill-ghost"
                   onClick={() => play(saved, 0)}
                 >
                   Play all
@@ -42,51 +44,56 @@ const Saved = () => {
 
           {saved.length === 0 ? (
             <p className="blank">
-              Nothing bookmarked yet. Hit the bookmark on any row to keep it, or{" "}
+              Nothing bookmarked yet. Hit the bookmark on any card to keep it,
+              or{" "}
               <Link className="blank-link" to="/library">
                 open the library
               </Link>
               .
             </p>
           ) : (
-            <TrackList tracks={saved} showMood />
+            <TrackList tracks={saved} layout="grid" showMood />
           )}
         </section>
 
-        <section className="saved-history">
-          <div className="saved-block-head">
-            <h2 className="section-title">Past readings</h2>
+        <section>
+          <div className="section-head saved-block-head">
+            <h2 className="display-sm">Readings</h2>
             {history.length > 0 && (
-              <button type="button" className="btn-quiet" onClick={clearHistory}>
+              <button
+                type="button"
+                className="pill-ghost"
+                onClick={clearHistory}
+              >
                 Clear
               </button>
             )}
           </div>
 
           {history.length === 0 ? (
-            <p className="blank blank-small">
+            <p className="blank">
               No readings yet. Every mood you read shows up here.
             </p>
           ) : (
             <ol className="history">
               {history.map((entry, index) => (
-                <li className="history-row" key={`${entry.at}-${index}`}>
+                <li key={`${entry.at}-${index}`}>
                   <Link
-                    className="history-mood"
+                    className="history-row"
                     to={`/library?mood=${entry.mood}`}
                     data-mood={entry.mood}
                   >
-                    <span className="history-swatch weave" aria-hidden="true" />
-                    {entry.mood}
+                    <i className="history-dot" aria-hidden="true" />
+                    <span className="history-mood">{entry.mood}</span>
+                    <span className="history-when">{sinceNow(entry.at)}</span>
+                    <span className="history-how">
+                      {HOW[entry.how] || "read"}
+                      {typeof entry.found === "number" &&
+                        ` · ${entry.found} ${
+                          entry.found === 1 ? "track" : "tracks"
+                        }`}
+                    </span>
                   </Link>
-                  <span className="history-when">{sinceNow(entry.at)}</span>
-                  <span className="history-how">
-                    {HOW[entry.how] || "read"}
-                    {typeof entry.found === "number" &&
-                      ` · ${entry.found} ${
-                        entry.found === 1 ? "track" : "tracks"
-                      }`}
-                  </span>
                 </li>
               ))}
             </ol>

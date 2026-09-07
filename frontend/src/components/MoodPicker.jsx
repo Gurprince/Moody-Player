@@ -1,5 +1,5 @@
 import React from "react";
-import { MOODS, MOOD_COPY } from "../api.js";
+import { MOODS } from "../api.js";
 import "./MoodPicker.css";
 
 /** The way in for anyone who'd rather not turn the camera on. */
@@ -9,20 +9,16 @@ const MoodPicker = ({ value, onPick, counts, disabled = false }) => (
       <button
         type="button"
         key={mood}
-        className="mood-chip"
+        className="mood-pill"
         data-mood={mood}
         data-on={value === mood}
         onClick={() => onPick(mood)}
         disabled={disabled}
         aria-pressed={value === mood}
       >
-        <span className="mood-chip-swatch weave" aria-hidden="true" />
-        <span className="mood-chip-name">{mood}</span>
-        <span className="mood-chip-line">
-          {counts
-            ? `${counts[mood] || 0} in the library`
-            : MOOD_COPY[mood].line}
-        </span>
+        <i className="mood-dot" aria-hidden="true" />
+        {mood}
+        {counts && <span className="mood-count tnum">{counts[mood] || 0}</span>}
       </button>
     ))}
   </div>

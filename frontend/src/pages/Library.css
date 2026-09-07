@@ -1,74 +1,89 @@
-.library-head {
-  max-width: 52rem;
-  padding-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+.library-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
 }
 
 .search {
   display: flex;
-  gap: 1px;
-  margin-bottom: 1.5rem;
-  background: var(--rule-strong);
-  border: 1px solid var(--rule-strong);
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1 1 20rem;
+  min-width: 0;
+  padding: 0.45rem 0.45rem 0.45rem 1rem;
+  border-radius: var(--pill);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  transition: border-color 200ms ease;
 }
 
-.search-input {
+.search:focus-within {
+  border-color: var(--line-hi);
+}
+
+.search input {
   flex: 1;
   min-width: 0;
-  padding: 0.9rem 1rem;
-  background: var(--cloth);
   border: 0;
+  background: none;
   font-size: var(--base);
-  color: var(--thread);
+  color: var(--ink);
 }
 
-.search-input::placeholder {
-  color: var(--thread-faint);
+.search input::placeholder {
+  color: var(--ink-3);
 }
 
-.search-input:focus {
+.search input:focus {
   outline: none;
-  background: var(--cloth-raised);
 }
 
-.search-submit {
+.search input::-webkit-search-cancel-button {
+  filter: invert(1);
+  opacity: 0.4;
+}
+
+.search-go {
   flex-shrink: 0;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--pill);
+  background: var(--ink);
+  color: #000;
+  font-size: var(--small);
+  font-weight: 700;
+  transition: opacity 200ms ease;
 }
 
-.library-results {
-  margin-top: clamp(2rem, 5vw, 3rem);
+.search-go:hover {
+  opacity: 0.86;
 }
 
 .library-results-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.75rem;
 }
 
-.library-results-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.library-results .note,
-.library-results .blank {
-  margin-top: 1.5rem;
+.library .note,
+.library .blank {
+  margin-top: 0.5rem;
 }
 
 .library-more {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 }
 
-@media (max-width: 32rem) {
-  .search {
+@media (max-width: 40rem) {
+  .library-controls {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .search-submit {
-    justify-content: center;
+  .library-controls .mood-picker {
+    justify-content: flex-start;
   }
 }

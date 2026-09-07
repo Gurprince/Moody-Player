@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { FiSearch } from "react-icons/fi";
 import TrackList, { TrackListSkeleton } from "../components/TrackList.jsx";
 import MoodPicker from "../components/MoodPicker.jsx";
 import { usePlayer } from "../context/usePlayer.js";
@@ -21,7 +22,6 @@ const Library = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [counts, setCounts] = useState(null);
-  const firstLoad = useRef(true);
 
   useEffect(() => setDraft(q), [q]);
 
@@ -53,7 +53,6 @@ const Library = () => {
         if (nextPage === 1) setSongs([]);
       } finally {
         setLoading(false);
-        firstLoad.current = false;
       }
     },
     [q, mood]
@@ -72,10 +71,10 @@ const Library = () => {
   };
 
   const pickMood = (next) => {
-    const params2 = new URLSearchParams(params);
-    if (next === mood) params2.delete("mood");
-    else params2.set("mood", next);
-    setParams(params2, { replace: true });
+    const updated = new URLSearchParams(params);
+    if (next === mood) updated.delete("mood");
+    else updated.set("mood", next);
+    setParams(updated, { replace: true });
     setMood(next === mood ? null : next);
   };
 
@@ -84,104 +83,106 @@ const Library = () => {
 
   return (
     <div className="page library">
-      <div className="library-head">
-        <h1 className="page-title">Library</h1>
-        <p className="page-lede">
-          Everything the player has collected so far, filed by the mood it was
-          cued for. Search it, or narrow it down to one mood.
-        </p>
-      </div>
-
-      <form className="search" onSubmit={submit} role="search">
-        <label className="visually-hidden" htmlFor="library-search">
-          Search by title or artist
-        </label>
-        <input
-          id="library-search"
-          className="search-input"
-          type="search"
-          placeholder="Search a title or an artist"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <button type="submit" className="btn search-submit">
-          Search
-        </button>
-      </form>
-
-      <MoodPicker value={mood} onPick={pickMood} counts={counts} />
-
-      <div className="library-results">
-        <div className="library-results-head">
-          <h2 className="section-title">
-            {mood ? (
-              <>
-                Filed under <em>{mood}</em>
-              </>
-            ) : q ? (
-              <>
-                Matching <em>{q}</em>
-              </>
-            ) : (
-              "Every track"
-            )}
-          </h2>
-          <div className="library-results-actions">
-            {!loading && (
-              <span className="micro tnum">
-                {total} {total === 1 ? "track" : "tracks"}
-              </span>
-            )}
-            {filtered && (
-              <button type="button" className="btn-quiet" onClick={clearAll}>
-                Clear filters
-              </button>
-            )}
-            {songs.length > 0 && (
-              <button
-                type="button"
-                className="btn-quiet"
-                onClick={() => play(songs, 0)}
-              >
-                Play all
-              </button>
-            )}
-          </div>
+      <div className="page-head">
+        <div>
+          <h1 className="display">Library</h1>
+          <p className="lede">
+            Everything the player has collected, filed by the mood it was cued
+            for.
+          </p>
         </div>
-
-        {error && (
-          <p className="note note-stop" role="alert">
-            {error}
-          </p>
-        )}
-
-        {loading && page === 1 && <TrackListSkeleton rows={6} />}
-
-        {!loading && !error && songs.length === 0 && (
-          <p className="blank">
-            {filtered
-              ? "Nothing here matches that. Clear the filters, or "
-              : "The library is empty so far. Read a mood on the home page to start filling it, or "}
-            <Link className="blank-link" to="/upload">
-              add a track yourself
-            </Link>
-            .
-          </p>
-        )}
-
-        {songs.length > 0 && <TrackList tracks={songs} showMood={!mood} />}
-
-        {hasMore && (
-          <button
-            type="button"
-            className="btn-quiet library-more"
-            onClick={() => load(page + 1)}
-            disabled={loading}
-          >
-            {loading ? "Loading…" : "Show more"}
-          </button>
-        )}
       </div>
+
+      <div className="library-controls">
+        <form className="search" onSubmit={submit} role="search">
+          <FiSearch size={16} strokeWidth={2} aria-hidden="true" />
+          <label className="visually-hidden" htmlFor="library-search">
+            Search by title or artist
+          </label>
+          <input
+            id="library-search"
+            type="search"
+            placeholder="Search a title or an artist"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <button type="submit" className="search-go">
+            Search
+          </button>
+        </form>
+
+        <MoodPicker value={mood} onPick={pickMood} counts={counts} />
+      </div>
+
+      <div className="section-head library-results-head">
+        <h2 className="display-sm">
+          {mood ? (
+            <>
+              Filed under <span className="tint">{mood}</span>
+            </>
+          ) : q ? (
+            <>Matching “{q}”</>
+          ) : (
+            "Every track"
+          )}
+        </h2>
+        <div className="section-actions">
+          {!loading && (
+            <span className="micro tnum">
+              {total} {total === 1 ? "track" : "tracks"}
+            </span>
+          )}
+          {filtered && (
+            <button type="button" className="pill-ghost" onClick={clearAll}>
+              Clear filters
+            </button>
+          )}
+          {songs.length > 0 && (
+            <button
+              type="button"
+              className="pill-ghost"
+              onClick={() => play(songs, 0)}
+            >
+              Play all
+            </button>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <p className="note note-stop" role="alert">
+          {error}
+        </p>
+      )}
+
+      {loading && page === 1 && <TrackListSkeleton rows={10} layout="grid" />}
+
+      {!loading && !error && songs.length === 0 && (
+        <p className="blank">
+          {filtered
+            ? "Nothing here matches that. Clear the filters, or "
+            : "The library is empty so far. Read a mood on the home page to start filling it, or "}
+          <Link className="blank-link" to="/upload">
+            add a track yourself
+          </Link>
+          .
+        </p>
+      )}
+
+      {songs.length > 0 && (
+        <TrackList tracks={songs} layout="grid" showMood={!mood} />
+      )}
+
+      {hasMore && (
+        <button
+          type="button"
+          className="pill-ghost library-more"
+          onClick={() => load(page + 1)}
+          disabled={loading}
+        >
+          {loading ? "Loading…" : "Show more"}
+        </button>
+      )}
     </div>
   );
 };

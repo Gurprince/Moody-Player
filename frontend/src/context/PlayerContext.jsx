@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { PlayerContext } from "./playerContext.js";
+import { PlayerContext } from "./usePlayer.js";
 import useStoredState from "../hooks/useStoredState.js";
 import { trackKey } from "../api.js";
 

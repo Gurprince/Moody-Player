@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { FiUploadCloud, FiImage } from "react-icons/fi";
 import { client, MOODS, readError } from "../api.js";
 import "./UploadForm.css";
 
@@ -55,12 +56,12 @@ const UploadSong = ({ onUpload }) => {
   return (
     <form
       ref={formRef}
-      className="upload-form"
+      className="upload-form panel"
       onSubmit={handleSubmit}
       encType="multipart/form-data"
     >
       <label className="field">
-        <span className="field-label">Title</span>
+        <span className="micro">Title</span>
         <input
           type="text"
           name="title"
@@ -72,7 +73,7 @@ const UploadSong = ({ onUpload }) => {
       </label>
 
       <label className="field">
-        <span className="field-label">Artist</span>
+        <span className="micro">Artist</span>
         <input
           type="text"
           name="artist"
@@ -83,8 +84,8 @@ const UploadSong = ({ onUpload }) => {
         />
       </label>
 
-      <fieldset className="field field-moods">
-        <legend className="field-label">Mood it suits</legend>
+      <fieldset className="field">
+        <legend className="micro">Mood it suits</legend>
         <div className="mood-radios">
           {MOODS.map((mood) => (
             <label className="mood-radio" key={mood} data-mood={mood}>
@@ -95,34 +96,51 @@ const UploadSong = ({ onUpload }) => {
                 checked={form.mood === mood}
                 onChange={handleChange}
               />
-              <span>{mood}</span>
+              <span>
+                <i aria-hidden="true" />
+                {mood}
+              </span>
             </label>
           ))}
         </div>
       </fieldset>
 
-      <label className="field">
-        <span className="field-label">Audio file</span>
-        <input
-          type="file"
-          name="audio"
-          accept="audio/*"
-          onChange={handleChange}
-          required
-        />
-      </label>
+      <div className="drops">
+        <label className="drop" data-filled={Boolean(files.audio)}>
+          <FiUploadCloud size={18} strokeWidth={1.75} aria-hidden="true" />
+          <span className="drop-label">
+            {files.audio ? files.audio.name : "Audio file"}
+          </span>
+          <span className="drop-hint">
+            {files.audio ? "Change" : "MP3, WAV or M4A"}
+          </span>
+          <input
+            type="file"
+            name="audio"
+            accept="audio/*"
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-      <label className="field">
-        <span className="field-label">Cover image — optional</span>
-        <input
-          type="file"
-          name="cover"
-          accept="image/*"
-          onChange={handleChange}
-        />
-      </label>
+        <label className="drop" data-filled={Boolean(files.cover)}>
+          <FiImage size={18} strokeWidth={1.75} aria-hidden="true" />
+          <span className="drop-label">
+            {files.cover ? files.cover.name : "Cover image"}
+          </span>
+          <span className="drop-hint">
+            {files.cover ? "Change" : "Square, optional"}
+          </span>
+          <input
+            type="file"
+            name="cover"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </label>
+      </div>
 
-      <button type="submit" className="btn upload-submit" disabled={sending}>
+      <button type="submit" className="pill upload-submit" disabled={sending}>
         {sending ? "Adding…" : "Add track"}
       </button>
 

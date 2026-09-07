@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
-import SiteHeader from "./components/SiteHeader.jsx";
+import IconRail from "./components/IconRail.jsx";
 import PlayerDock from "./components/PlayerDock.jsx";
+import { Wordmark } from "./components/Chrome.jsx";
 import { usePlayer } from "./context/usePlayer.js";
 import Home from "./pages/Home.jsx";
 import Library from "./pages/Library.jsx";
@@ -15,7 +16,7 @@ const App = () => {
   const { mood, track } = usePlayer();
   const location = useLocation();
 
-  /* The mood the site is in tints every page, so it lives on the shell. */
+  /* The mood the site is in tints every page, so it lives on the root. */
   useEffect(() => {
     const root = document.documentElement;
     if (mood) root.setAttribute("data-mood", mood);
@@ -28,7 +29,11 @@ const App = () => {
 
   return (
     <div className="shell" data-docked={Boolean(track)}>
-      <SiteHeader />
+      <div className="topbar">
+        <Wordmark />
+      </div>
+
+      <IconRail />
 
       <main className="shell-main">
         <Routes>
@@ -42,20 +47,17 @@ const App = () => {
 
       <footer className="colophon">
         <div className="colophon-inner">
-          <div className="colophon-lead">
-            <p className="colophon-mark">Moody Player</p>
-            <p className="colophon-note">
-              Expressions are read in your browser and never leave this device.
-              Only the mood word is sent to find music. Saved tracks and past
-              readings stay in this browser too.
-            </p>
-          </div>
+          <p className="colophon-note">
+            Expressions are read in your browser and never leave this device.
+            Only the mood word is sent to find music. Saved tracks and past
+            readings stay in this browser too.
+          </p>
 
-          <nav className="colophon-nav" aria-label="Moods">
+          <nav className="colophon-nav colophon-moods" aria-label="Moods">
             <p className="micro">Moods</p>
             {MOODS.map((name) => (
               <Link key={name} to={`/library?mood=${name}`} data-mood={name}>
-                <span className="colophon-swatch weave" aria-hidden="true" />
+                <i className="colophon-dot" aria-hidden="true" />
                 {name}
               </Link>
             ))}

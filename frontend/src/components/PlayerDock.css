@@ -1,41 +1,41 @@
+/* A floating bar, not an edge-to-edge one — it reads as another
+   piece of chrome hovering over the black canvas. */
+
 .dock {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 60;
-  background: var(--cloth);
-  border-top: 1px solid var(--rule-strong);
-  box-shadow: 0 -1px 0 0 var(--floss);
-  transition: box-shadow 500ms ease;
-}
-
-.dock-inner {
-  width: 100%;
-  max-width: var(--shell);
-  margin: 0 auto;
-  padding: 0.75rem var(--gutter);
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 65;
+  width: min(calc(100vw - 2.5rem), 60rem);
   display: grid;
-  grid-template-columns: minmax(0, 15rem) auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 14rem) auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(0.85rem, 2vw, 1.75rem);
+  padding: 0.7rem 1.1rem;
+  border-radius: 22px;
+  background: rgba(18, 18, 18, 0.86);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.75);
 }
 
 /* ---------------- now playing ---------------- */
 
 .dock-now {
   display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr);
+  grid-template-columns: 2.75rem minmax(0, 1fr);
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   min-width: 0;
 }
 
 .dock-cover {
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
   object-fit: cover;
-  background: var(--cloth-raised);
+  background: var(--panel);
 }
 
 .dock-meta {
@@ -43,9 +43,9 @@
 }
 
 .dock-title {
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: var(--base);
-  color: var(--thread);
+  font-size: var(--small);
+  font-weight: 600;
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -53,7 +53,7 @@
 
 .dock-artist {
   font-size: var(--micro);
-  color: var(--thread-faint);
+  color: var(--ink-3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -64,136 +64,140 @@
 .dock-transport {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.35rem;
 }
 
-.transport-step,
-.transport-toggle {
+.dock-icon {
   position: relative;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  color: var(--thread-faint);
-  transition: color 180ms ease;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  color: var(--ink-3);
+  transition: color 180ms ease, background 180ms ease;
 }
 
-.transport-step:hover,
-.transport-toggle:hover {
-  color: var(--thread);
+.dock-icon:hover {
+  color: var(--ink);
+  background: var(--panel-hi);
 }
 
-.transport-toggle[data-on='true'] {
-  color: var(--floss);
+.dock-icon[data-on='true'] {
+  color: var(--accent);
 }
 
-.repeat-one {
+.dock-one {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 0.15rem;
+  bottom: 0.15rem;
   font-size: 0.5625rem;
   font-style: normal;
   font-weight: 700;
   line-height: 1;
-  color: var(--floss);
+  color: var(--accent);
 }
 
-.transport-play {
+.dock-play {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: 50%;
-  background: var(--floss);
-  color: var(--ground-deep);
-  transition: background 400ms ease;
+  background: var(--ink);
+  color: #000;
+  transition: transform 180ms ease;
 }
 
-.transport-play svg {
+.dock-play:hover {
+  transform: scale(1.06);
+}
+
+.dock-play svg {
   margin-left: 1px; /* optically centres the play triangle */
 }
 
-/* ---------------- scrubbers ---------------- */
+/* ---------------- sliders ---------------- */
 
 .dock-scrub {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .dock-time {
   font-size: var(--micro);
-  color: var(--thread-faint);
+  color: var(--ink-3);
 }
 
 .dock-side {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
-.scrub {
+.slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 18px;
+  height: 16px;
   background: transparent;
   cursor: pointer;
 }
 
-.scrub-volume {
-  width: 5rem;
+.slider-volume {
+  width: 4.5rem;
 }
 
-.scrub::-webkit-slider-runnable-track {
-  height: 4px;
+.slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: var(--pill);
   background: linear-gradient(
     90deg,
-    var(--floss) 0 var(--played, 0%),
-    rgba(240, 227, 210, 0.14) var(--played, 0%) 100%
+    var(--accent) 0 var(--played, 0%),
+    rgba(255, 255, 255, 0.16) var(--played, 0%) 100%
   );
 }
 
-.scrub::-moz-range-track {
-  height: 4px;
-  background: rgba(240, 227, 210, 0.14);
+.slider::-moz-range-track {
+  height: 3px;
+  border-radius: var(--pill);
+  background: rgba(255, 255, 255, 0.16);
 }
 
-.scrub::-moz-range-progress {
-  height: 4px;
-  background: var(--floss);
+.slider::-moz-range-progress {
+  height: 3px;
+  border-radius: var(--pill);
+  background: var(--accent);
 }
 
-.scrub::-webkit-slider-thumb {
+.slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 4px;
-  height: 14px;
-  margin-top: -5px;
-  border-radius: 0;
-  background: var(--thread);
+  width: 10px;
+  height: 10px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: var(--ink);
 }
 
-.scrub::-moz-range-thumb {
-  width: 4px;
-  height: 14px;
+.slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
   border: 0;
-  border-radius: 0;
-  background: var(--thread);
+  border-radius: 50%;
+  background: var(--ink);
 }
 
 /* ---------------- queue ---------------- */
 
-.queue-panel {
+.queue {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: var(--dock);
-  top: 0;
-  z-index: 55;
-  background: color-mix(in srgb, var(--ground-deep) 94%, transparent);
-  backdrop-filter: blur(14px);
+  inset: 0 0 calc(var(--dock) + 1rem) 0;
+  z-index: 62;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(16px);
   overflow-y: auto;
   animation: queue-in 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -201,7 +205,7 @@
 @keyframes queue-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -211,24 +215,9 @@
 
 .queue-inner {
   width: 100%;
-  max-width: var(--shell);
+  max-width: 60rem;
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 2rem;
-}
-
-.queue-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--rule-strong);
-}
-
-.queue-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  padding: clamp(2rem, 6vw, 4rem) var(--gutter) 2rem;
 }
 
 .queue-close {
@@ -236,35 +225,45 @@
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--rule-strong);
-  color: var(--thread-dim);
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-2);
 }
 
 .queue-close:hover {
-  color: var(--thread);
-  border-color: var(--thread-dim);
+  color: var(--ink);
+  border-color: var(--line-hi);
 }
 
 .queue-row {
   display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 14rem);
-  align-items: baseline;
-  gap: 1rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr) minmax(0, 12rem);
+  align-items: center;
+  gap: 0.9rem;
   width: 100%;
-  padding: 0.65rem 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 12px;
   text-align: left;
-  border-bottom: 1px solid var(--rule);
+  transition: background 180ms ease;
 }
 
-.queue-index {
-  font-size: var(--micro);
-  color: var(--thread-faint);
+.queue-row:hover {
+  background: var(--panel);
+}
+
+.queue-row img {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--panel);
 }
 
 .queue-name {
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: var(--base);
-  color: var(--thread-dim);
+  font-size: var(--small);
+  font-weight: 600;
+  color: var(--ink-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -272,33 +271,24 @@
 
 .queue-artist {
   font-size: var(--small);
-  color: var(--thread-faint);
+  color: var(--ink-3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.queue-row:hover .queue-name {
-  color: var(--thread);
-}
-
 .queue-row[data-past='true'] .queue-name {
-  color: var(--thread-faint);
-}
-
-.queue-row[data-current='true'] .queue-index {
-  color: var(--floss);
+  color: var(--ink-3);
 }
 
 .queue-row[data-current='true'] .queue-name {
-  color: var(--thread);
-  font-weight: 500;
+  color: var(--accent);
 }
 
 @media (max-width: 64rem) {
-  .dock-inner {
+  .dock {
     grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: 0.5rem;
+    row-gap: 0.35rem;
   }
 
   .dock-scrub {
@@ -309,7 +299,17 @@
   .dock-side {
     display: none;
   }
+}
 
+@media (max-width: 52rem) {
+  /* the icon rail takes the bottom edge on narrow screens */
+  .dock {
+    bottom: 5.5rem;
+  }
+
+  .queue {
+    inset: 0 0 12rem 0;
+  }
 }
 
 @media (max-width: 32rem) {
@@ -321,12 +321,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .dock-transport {
-    gap: 0.35rem;
-  }
-
   .queue-row {
-    grid-template-columns: 1.75rem minmax(0, 1fr);
+    grid-template-columns: 2.5rem minmax(0, 1fr);
   }
 
   .queue-artist {

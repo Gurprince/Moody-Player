@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js/dist/face-api.js";
+import { Rings } from "./Chrome.jsx";
 import "./FacialExpression.css";
 
 /* face-api reports seven expressions; the library stocks four moods,
@@ -24,12 +25,14 @@ function scoreMoods(expressions) {
   return scores;
 }
 
-const FacialExpression = ({ onRead, fetching, mood }) => {
+const FacialExpression = ({ onRead, fetching, mood, children }) => {
   const videoRef = useRef(null);
   const [phase, setPhase] = useState("starting"); // starting | live | blocked
   const [reading, setReading] = useState(false);
   const [notice, setNotice] = useState(null);
   const [scores, setScores] = useState(null);
+
+  const busy = reading || fetching;
 
   useEffect(() => {
     let stream;
@@ -55,8 +58,8 @@ const FacialExpression = ({ onRead, fetching, mood }) => {
         setPhase("blocked");
         setNotice(
           err?.name === "NotAllowedError" || err?.name === "NotFoundError"
-            ? "Camera access is off. Turn it on for this site, or pick a mood by hand below."
-            : "The camera or the detection models didn't load. Pick a mood by hand below."
+            ? "Camera access is off. Turn it on for this site, or pick a mood below."
+            : "The camera or the detection models didn't load. Pick a mood below."
         );
       }
     })();
@@ -95,77 +98,58 @@ const FacialExpression = ({ onRead, fetching, mood }) => {
     }
   };
 
-  const busy = reading || fetching;
-
   return (
-    <div className="instrument">
-      <div className="viewfinder" data-state={phase}>
-        <video
-          ref={videoRef}
-          className="viewfinder-feed"
-          autoPlay
-          muted
-          playsInline
-          onPlaying={() => setPhase("live")}
-        />
-
-        {phase === "starting" && (
-          <p className="viewfinder-status">Waking the camera…</p>
-        )}
-        {phase === "blocked" && (
-          <p className="viewfinder-status viewfinder-status-stop">{notice}</p>
-        )}
-
-        <span
-          className="viewfinder-frame"
-          data-reading={reading}
-          aria-hidden="true"
-        >
-          <i />
-          <i />
-          <i />
-          <i />
-        </span>
+    <div className="reader">
+      <div className="lens-wrap">
+        <Rings live={busy} />
+        <div className="lens" data-state={phase} data-reading={reading}>
+          <video
+            ref={videoRef}
+            className="lens-feed"
+            autoPlay
+            muted
+            playsInline
+            onPlaying={() => setPhase("live")}
+          />
+          {phase === "starting" && (
+            <p className="lens-status">Waking the camera</p>
+          )}
+          {phase === "blocked" && <p className="lens-status">No camera</p>}
+        </div>
       </div>
+
+      {children}
 
       <button
         type="button"
-        className="btn read-button"
+        className="pill reader-button"
         onClick={handleRead}
         disabled={busy || phase !== "live"}
       >
         {busy ? "Reading…" : mood ? "Read again" : "Read my mood"}
       </button>
 
-      {phase !== "blocked" && notice && (
-        <p className="note" role="status">
+      {notice && (
+        <p className={`note ${phase === "blocked" ? "note-stop" : ""}`} role="status">
           {notice}
         </p>
       )}
 
       {scores && (
-        <div className="readout">
-          <p className="micro readout-caption">what the last read found</p>
-          <dl className="readout-rows">
-            {MOODS.map((name) => {
-              const value = Math.round((scores[name] || 0) * 100);
-              return (
-                <div className="readout-row" key={name} data-top={name === mood}>
-                  <dt>{name}</dt>
-                  <dd>
-                    <span className="readout-track">
-                      <span
-                        className="readout-fill"
-                        style={{ width: `${Math.max(value, 1)}%` }}
-                      />
-                    </span>
-                    <span className="readout-value tnum">{value}</span>
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </div>
+        <dl className="readout">
+          {MOODS.map((name) => {
+            const value = Math.round((scores[name] || 0) * 100);
+            return (
+              <div className="readout-cell" key={name} data-top={name === mood}>
+                <dt>{name}</dt>
+                <dd className="tnum">{value}</dd>
+                <span className="readout-bar" aria-hidden="true">
+                  <i style={{ width: `${value}%` }} />
+                </span>
+              </div>
+            );
+          })}
+        </dl>
       )}
     </div>
   );

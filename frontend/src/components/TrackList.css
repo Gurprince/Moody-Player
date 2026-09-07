@@ -1,184 +1,192 @@
-.tracks {
-  margin-top: 0.5rem;
-}
-
-.track {
-  position: relative;
+.cards.grid {
   display: grid;
-  grid-template-columns: 4rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1.15rem;
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--rule);
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 1.25rem 1rem;
 }
 
-.track[data-current='true'] {
-  background: linear-gradient(90deg, var(--floss-deep), transparent 60%);
+.cards.rail .card {
+  flex: 0 0 13rem;
+  scroll-snap-align: start;
 }
 
-.track-marker {
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 100%;
-  height: 1px;
-  background: var(--floss);
-}
-
-.track-cover {
-  width: 4rem;
-  height: 4rem;
-  object-fit: cover;
-  background: var(--cloth-raised);
-  filter: saturate(0.85);
-  transition: filter 200ms ease;
-}
-
-.track[data-current='true'] .track-cover {
-  filter: none;
-  outline: 2px solid var(--floss);
-  outline-offset: -2px;
-}
-
-.track-meta {
+.card {
   min-width: 0;
 }
 
-.track-title {
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: var(--mid);
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--thread);
+/* ---------------- artwork ---------------- */
+
+.card-art {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  margin-bottom: 0.7rem;
+  border-radius: var(--card);
+  overflow: hidden;
+  background: #0d0d0d;
+  border: 1px solid var(--line);
+}
+
+.card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 300ms ease;
+}
+
+.card:hover .card-art img {
+  transform: scale(1.04);
+  opacity: 0.72;
+}
+
+.card[data-current='true'] .card-art {
+  border-color: var(--accent);
+}
+
+.card-badge-left {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  text-transform: capitalize;
+}
+
+.card-badge-right {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+/* ---------------- artwork controls ---------------- */
+
+.card-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.82);
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #000;
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.card-play svg {
+  margin-left: 1px; /* optically centres the play triangle */
+}
+
+.card:hover .card-play,
+.card-play:focus-visible,
+.card[data-current='true'] .card-play {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.card[data-current='true'] .card-play {
+  background: var(--accent);
+}
+
+.card-save {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  opacity: 0;
+  transition: opacity 200ms ease, color 200ms ease;
+}
+
+.card:hover .card-save,
+.card-save:focus-visible,
+.card-save[data-on='true'] {
+  opacity: 1;
+}
+
+.card-save:hover {
+  color: var(--ink);
+}
+
+.card-save[data-on='true'] {
+  color: var(--accent);
+}
+
+/* ---------------- caption ---------------- */
+
+.card-title {
+  font-size: var(--base);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.track-artist {
-  margin-top: 0.15rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+.card[data-current='true'] .card-title {
+  color: var(--accent);
+}
+
+.card-artist {
+  margin-top: 0.1rem;
   font-size: var(--small);
-  color: var(--thread-faint);
-  min-width: 0;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.track[data-current='true'] .track-artist {
-  color: var(--thread-dim);
-}
+/* ---------------- waiting ---------------- */
 
-.track-mood {
-  flex-shrink: 0;
-  padding: 0.1rem 0.4rem;
-  font-size: var(--micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--thread-dim);
-  border: 1px solid var(--rule-strong);
-}
-
-.track-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.track-save {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  color: var(--thread-faint);
-  opacity: 0;
-  transition: color 180ms ease, opacity 180ms ease;
-}
-
-.track:hover .track-save,
-.track-save:focus-visible,
-.track-save[data-on='true'] {
-  opacity: 1;
-}
-
-.track-save:hover {
-  color: var(--thread);
-}
-
-.track-save[data-on='true'] {
-  color: var(--floss);
-}
-
-.track-play {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: 1px solid var(--rule-strong);
-  color: var(--thread-dim);
-  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
-}
-
-.track-play svg {
-  margin-left: 1px; /* optically centres the play triangle */
-}
-
-.track:hover .track-play {
-  color: var(--thread);
-  border-color: var(--thread-dim);
-}
-
-.track[data-current='true'] .track-play {
-  background: var(--floss);
-  border-color: var(--floss);
-  color: var(--ground-deep);
-}
-
-/* waiting rows keep the real rhythm instead of showing a spinner */
-.track-waiting {
-  grid-template-columns: 4rem minmax(0, 1fr);
+.card-waiting {
   animation: breathe 1.6s ease-in-out infinite;
 }
 
-.track-waiting .track-cover {
-  display: block;
-  background: var(--cloth);
+.card-waiting .card-art {
+  background: var(--panel);
 }
 
-.track-lines {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.track-lines i {
+.card-line {
   display: block;
   height: 0.7rem;
-  background: var(--cloth);
+  margin-bottom: 0.4rem;
+  border-radius: var(--pill);
+  background: var(--panel);
 }
 
-.track-waiting:nth-child(2) { animation-delay: 0.12s; }
-.track-waiting:nth-child(3) { animation-delay: 0.24s; }
-.track-waiting:nth-child(4) { animation-delay: 0.36s; }
-.track-waiting:nth-child(5) { animation-delay: 0.48s; }
+.card-line-short {
+  width: 38%;
+}
+
+.card-waiting:nth-child(2) { animation-delay: 0.1s; }
+.card-waiting:nth-child(3) { animation-delay: 0.2s; }
+.card-waiting:nth-child(4) { animation-delay: 0.3s; }
+.card-waiting:nth-child(5) { animation-delay: 0.4s; }
 
 @keyframes breathe {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
 }
 
-@media (max-width: 32rem) {
-  .track {
-    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
-    gap: 0.85rem;
+@media (max-width: 34rem) {
+  .cards.grid {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   }
 
-  .track-cover {
-    width: 3.25rem;
-    height: 3.25rem;
+  .cards.rail .card {
+    flex-basis: 10rem;
   }
 
-  .track-save {
+  .card-save {
     opacity: 1;
   }
 }

@@ -1,0 +1,88 @@
+/* ---------------- rings ---------------- */
+
+.rings {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(150vw, 1500px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rings-field,
+.rings-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.rings-field {
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    transparent 0 43px,
+    rgba(255, 255, 255, 0.075) 43px 44px
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 22%, transparent 68%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 22%, transparent 68%);
+}
+
+/* the mood bleeds outward from the middle of the rings */
+.rings-glow {
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--accent) 0%,
+    transparent 42%
+  );
+  opacity: 0.07;
+  transition: opacity 700ms ease, background 700ms ease;
+}
+
+.rings[data-live='true'] .rings-glow {
+  opacity: 0.16;
+}
+
+.rings[data-live='true'] .rings-field {
+  animation: ripple 2.4s ease-out infinite;
+}
+
+@keyframes ripple {
+  from {
+    transform: scale(0.965);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.045);
+    opacity: 1;
+  }
+}
+
+/* ---------------- wordmark ---------------- */
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+}
+
+.wordmark-mark {
+  width: 2.1rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.wordmark-name {
+  font-family: 'Archivo Black', 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.wordmark-name sup {
+  font-size: 0.55em;
+  vertical-align: super;
+  color: var(--ink-3);
+}

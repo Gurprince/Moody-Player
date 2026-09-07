@@ -1,82 +1,44 @@
 .upload-form {
   display: grid;
-  gap: 1.25rem;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
-  background: var(--cloth);
-  border: 1px solid var(--rule-strong);
+  gap: 1.35rem;
+  padding: clamp(1.35rem, 3vw, 2rem);
 }
 
 .field {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.5rem;
   border: 0;
   padding: 0;
   margin: 0;
   min-width: 0;
 }
 
-.field-label {
-  font-size: var(--micro);
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  color: var(--thread-dim);
-  padding: 0;
-}
-
 .upload-form input[type='text'] {
-  padding: 0.7rem 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pill);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
   font-size: var(--base);
-  color: var(--thread);
-  background: var(--ground-deep);
-  border: 1px solid var(--rule);
-  border-radius: 0;
+  color: var(--ink);
+  transition: border-color 200ms ease, background 200ms ease;
 }
 
-.upload-form input::placeholder {
-  color: var(--thread-faint);
+.upload-form input[type='text']::placeholder {
+  color: var(--ink-3);
 }
 
 .upload-form input[type='text']:focus {
-  outline: 2px solid var(--floss);
-  outline-offset: -2px;
-  border-color: transparent;
-}
-
-.upload-form input[type='file'] {
-  padding: 0.5rem;
-  font-size: var(--small);
-  color: var(--thread-faint);
-  background: var(--ground-deep);
-  border: 1px solid var(--rule);
-}
-
-.upload-form input[type='file']::file-selector-button {
-  margin-right: 0.75rem;
-  padding: 0.35rem 0.7rem;
-  font: inherit;
-  font-size: var(--micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--thread);
-  background: var(--cloth-raised);
-  border: 1px solid var(--rule-strong);
-  cursor: pointer;
+  outline: none;
+  border-color: var(--line-hi);
+  background: var(--panel-hi);
 }
 
 /* ---------------- mood radios ---------------- */
 
 .mood-radios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
-}
-
-.mood-radio {
-  display: block;
-  background: var(--ground-deep);
-  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .mood-radio input {
@@ -86,31 +48,105 @@
 }
 
 .mood-radio span {
-  display: block;
-  padding: 0.6rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--pill);
+  border: 1px solid var(--line);
+  background: var(--panel);
   font-size: var(--small);
   font-weight: 600;
-  color: var(--thread-faint);
-  border-top: 3px solid transparent;
+  color: var(--ink-3);
+  text-transform: capitalize;
+  cursor: pointer;
   transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
 }
 
+.mood-radio span i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .mood-radio:hover span {
-  color: var(--thread-dim);
-  background: var(--cloth);
+  color: var(--ink);
+  border-color: var(--line-hi);
 }
 
 .mood-radio input:checked + span {
-  color: var(--floss);
-  background: var(--floss-deep);
-  border-top-color: var(--floss);
+  color: #000;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mood-radio input:checked + span i {
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .mood-radio input:focus-visible + span {
-  outline: 2px solid var(--floss);
-  outline-offset: -2px;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ---------------- file drops ---------------- */
+
+.drops {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1.35rem 1rem;
+  border-radius: var(--card);
+  border: 1px dashed var(--line-hi);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--ink-3);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
+}
+
+.drop:hover {
+  color: var(--ink-2);
+  border-color: var(--ink-3);
+  background: var(--panel);
+}
+
+.drop[data-filled='true'] {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-label {
+  font-size: var(--small);
+  font-weight: 600;
+  color: var(--ink);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drop-hint {
+  font-size: var(--micro);
+  color: var(--ink-3);
 }
 
 .upload-submit {
-  justify-content: flex-start;
+  justify-self: start;
 }
