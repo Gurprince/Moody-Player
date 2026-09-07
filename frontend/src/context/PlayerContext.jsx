@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { PlayerContext } from "./usePlayer.js";
 import useStoredState from "../hooks/useStoredState.js";
-import { trackKey } from "../api.js";
+import { trackKey, sendSignal } from "../api.js";
 
 const REPEAT_STATES = ["off", "all", "one"];
 
@@ -46,6 +46,18 @@ export function PlayerProvider({ children }) {
   const [mood, setMood] = useStoredState("mp:mood", null);
 
   const track = cursor >= 0 ? queue[order[cursor]] : null;
+
+  /* Signals are tagged with the mood that was on screen at the time. */
+  const moodRef = useRef(null);
+  useEffect(() => {
+    moodRef.current = mood;
+  }, [mood]);
+
+  /* enqueue needs to know the current queue without re-binding on every change. */
+  const queueRef = useRef([]);
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
 
   /* ---------------- audio element wiring ---------------- */
 
@@ -120,7 +132,30 @@ export function PlayerProvider({ children }) {
     [order.length, repeat]
   );
 
-  const next = useCallback(() => step(1), [step]);
+  /* A skip is a signal: you did not want that track in this mood. */
+  const next = useCallback(() => {
+    if (track) {
+      sendSignal({
+        title: track.title,
+        artist: track.artist,
+        mood: moodRef.current,
+        signal: "skip",
+      });
+    }
+    step(1);
+  }, [step, track]);
+
+  /* Not this one, not in this mood — never offer it here again. */
+  const dismiss = useCallback(() => {
+    if (!track) return;
+    sendSignal({
+      title: track.title,
+      artist: track.artist,
+      mood: moodRef.current,
+      signal: "down",
+    });
+    step(1);
+  }, [step, track]);
 
   const previous = useCallback(() => {
     const audio = audioRef.current;
@@ -166,9 +201,40 @@ export function PlayerProvider({ children }) {
       setQueue(playable);
       setOrder(nextOrder);
       setCursor(shuffle ? 0 : start);
+
+      const first = playable[nextOrder[shuffle ? 0 : start]];
+      if (first) {
+        sendSignal({
+          title: first.title,
+          artist: first.artist,
+          mood: moodRef.current,
+          signal: "play",
+        });
+      }
     },
     [shuffle]
   );
+
+  /* Ambient mode drifts the queue instead of cutting the music off. It
+     returns how many tracks it actually appended, so the page can say so. */
+  const enqueue = useCallback((list) => {
+    const playable = list.filter((item) => item?.audio);
+    if (playable.length === 0) return 0;
+
+    const current = queueRef.current;
+    const have = new Set(current.map(trackKey));
+    const fresh = playable.filter((item) => !have.has(trackKey(item)));
+    if (fresh.length === 0) return 0;
+
+    const nextQueue = [...current, ...fresh];
+    queueRef.current = nextQueue;
+    setQueue(nextQueue);
+    setOrder((currentOrder) => [
+      ...currentOrder,
+      ...fresh.map((_, i) => current.length + i),
+    ]);
+    return fresh.length;
+  }, []);
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
@@ -239,11 +305,18 @@ export function PlayerProvider({ children }) {
 
   const toggleSaved = useCallback(
     (item) => {
-      setSaved((rows) =>
-        rows.some((row) => trackKey(row) === trackKey(item))
+      setSaved((rows) => {
+        const had = rows.some((row) => trackKey(row) === trackKey(item));
+        sendSignal({
+          title: item.title,
+          artist: item.artist,
+          mood: item.mood || moodRef.current,
+          signal: had ? "unsave" : "save",
+        });
+        return had
           ? rows.filter((row) => trackKey(row) !== trackKey(item))
-          : [{ ...item, savedAt: Date.now() }, ...rows]
-      );
+          : [{ ...item, savedAt: Date.now() }, ...rows];
+      });
     },
     [setSaved]
   );
@@ -309,8 +382,10 @@ export function PlayerProvider({ children }) {
     mood,
     play,
     playTrack,
+    enqueue,
     toggle,
     next,
+    dismiss,
     previous,
     seek,
     jumpTo,

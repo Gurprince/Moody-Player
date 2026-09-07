@@ -1,14 +1,14 @@
-import React, { useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import IconRail from "./components/IconRail.jsx";
 import PlayerDock from "./components/PlayerDock.jsx";
 import { Wordmark } from "./components/Chrome.jsx";
 import { usePlayer } from "./context/usePlayer.js";
-import Home from "./pages/Home.jsx";
-import Library from "./pages/Library.jsx";
-import Saved from "./pages/Saved.jsx";
-import Upload from "./pages/Upload.jsx";
-import NotFound from "./pages/NotFound.jsx";
+const Home = lazy(() => import("./pages/Home.jsx"));
+const Library = lazy(() => import("./pages/Library.jsx"));
+const Saved = lazy(() => import("./pages/Saved.jsx"));
+const Upload = lazy(() => import("./pages/Upload.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 import { MOODS } from "./api.js";
 import "./App.css";
 
@@ -36,6 +36,7 @@ const App = () => {
       <IconRail />
 
       <main className="shell-main">
+        <Suspense fallback={<div className="route-wait" aria-hidden="true" />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/library" element={<Library />} />
@@ -43,6 +44,7 @@ const App = () => {
           <Route path="/upload" element={<Upload />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
 
       <footer className="colophon">

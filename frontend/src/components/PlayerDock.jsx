@@ -10,6 +10,7 @@ import {
   FiVolumeX,
   FiList,
   FiX,
+  FiThumbsDown,
 } from "react-icons/fi";
 import { usePlayer } from "../context/usePlayer.js";
 import { trackKey } from "../api.js";
@@ -39,6 +40,7 @@ const PlayerDock = () => {
     toggle,
     next,
     previous,
+    dismiss,
     seek,
     jumpTo,
     toggleShuffle,
@@ -170,6 +172,15 @@ const PlayerDock = () => {
             aria-label="Next track"
           >
             <FiSkipForward size={16} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className="dock-icon dock-down"
+            onClick={dismiss}
+            aria-label="Never play this in this mood"
+            title="Never play this in this mood"
+          >
+            <FiThumbsDown size={15} strokeWidth={2} />
           </button>
           <button
             type="button"

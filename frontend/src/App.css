@@ -15,6 +15,11 @@
   width: 100%;
 }
 
+/* holds the page height steady while a route's chunk arrives */
+.route-wait {
+  min-height: 70vh;
+}
+
 /* ---------------- floating wordmark ---------------- */
 
 .topbar {

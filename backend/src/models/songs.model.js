@@ -1,13 +1,27 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const songSchema = new mongoose.Schema({
+const songSchema = new mongoose.Schema(
+  {
     title: String,
     artist: String,
     audio: String,
     mood: String,
-    songCover: String
-})
+    songCover: String,
 
-const song = mongoose.model('song', songSchema);
+    // where the row came from, so a provider can be re-crawled or retired
+    source: { type: String, default: "upload" },
+    sourceId: String,
+    durationMs: Number,
+    genre: String,
 
-module.exports = song;
+    // true when `audio` is a short preview rather than the whole track
+    preview: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+songSchema.index({ mood: 1, audio: 1 });
+songSchema.index({ title: "text", artist: "text" });
+songSchema.index({ source: 1, sourceId: 1 });
+
+module.exports = mongoose.model("song", songSchema);

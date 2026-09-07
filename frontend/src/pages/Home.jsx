@@ -4,37 +4,65 @@ import FacialExpression from "../components/FacialExpression.jsx";
 import MoodPicker from "../components/MoodPicker.jsx";
 import TrackList, { TrackListSkeleton } from "../components/TrackList.jsx";
 import { usePlayer } from "../context/usePlayer.js";
-import { fetchMoodSongs, readError, MOOD_COPY } from "../api.js";
+import { fetchMoodSongs, readError, describeBlend, MOOD_COPY } from "../api.js";
 import "./Home.css";
 
 const Home = () => {
-  const { mood, setMood, recordReading, play } = usePlayer();
+  const { mood, setMood, recordReading, play, enqueue, track } = usePlayer();
   const [songs, setSongs] = useState([]);
+  const [blend, setBlend] = useState(null);
+  const [personalised, setPersonalised] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState(null);
-  const [source, setSource] = useState(null); // "camera" | "picked"
+  const [source, setSource] = useState(null); // camera | picked | ambient
+  const [drift, setDrift] = useState(null);
   const restored = useRef(false);
+  const playingRef = useRef(false);
+
+  useEffect(() => {
+    playingRef.current = Boolean(track);
+  }, [track]);
 
   const load = useCallback(
-    async (nextMood, how, scores) => {
+    async (nextMood, how, scores, meta = {}) => {
       setMood(nextMood);
       setSource(how);
       setFetching(true);
       setError(null);
       try {
-        const found = await fetchMoodSongs(nextMood);
-        setSongs(found);
+        const result = await fetchMoodSongs(nextMood, scores);
+        setSongs(result.songs);
+        setBlend(result.blend);
+        setPersonalised(result.personalised);
+
+        /* Ambient shouldn't cut the music off — it lengthens the queue and
+           says so, rather than replacing what you are listening to. */
+        if (meta.ambient && playingRef.current) {
+          const added = enqueue(result.songs);
+          setDrift(
+            added
+              ? `Your face changed — ${added} ${
+                  added === 1 ? "track" : "tracks"
+                } added to the queue`
+              : null
+          );
+        } else {
+          setDrift(null);
+        }
+
         /* Re-cueing a remembered mood on load isn't a new reading. */
         if (how !== "restored") {
           recordReading({
             mood: nextMood,
             how,
             scores: scores || null,
-            found: found.length,
+            found: result.songs.length,
+            faces: meta.faces || 1,
           });
         }
       } catch (err) {
         setSongs([]);
+        setBlend(null);
         setError(
           readError(
             err,
@@ -45,7 +73,7 @@ const Home = () => {
         setFetching(false);
       }
     },
-    [recordReading, setMood]
+    [recordReading, setMood, enqueue]
   );
 
   /* The site remembers the last mood, so come back with it already cued. */
@@ -55,15 +83,20 @@ const Home = () => {
     load(mood, "restored");
   }, [mood, load]);
 
+  const handleRead = useCallback(
+    (nextMood, scores, meta) =>
+      load(nextMood, meta?.ambient ? "ambient" : "camera", scores, meta),
+    [load]
+  );
+
+  const blendLine = describeBlend(blend);
+  const mixed = blend && blend.length > 1;
+
   return (
     <div className="home">
       <section className="stage">
         <div className="stage-inner">
-          <FacialExpression
-            onRead={(nextMood, scores) => load(nextMood, "camera", scores)}
-            fetching={fetching}
-            mood={mood}
-          >
+          <FacialExpression onRead={handleRead} fetching={fetching} mood={mood}>
             <h1 className="display stage-title">
               {mood ? (
                 <>
@@ -104,7 +137,6 @@ const Home = () => {
             <div className="section-actions">
               <span className="micro tnum">
                 {songs.length} {songs.length === 1 ? "track" : "tracks"}
-                {source === "camera" ? " · from your face" : ""}
               </span>
               <button
                 type="button"
@@ -116,6 +148,16 @@ const Home = () => {
             </div>
           )}
         </div>
+
+        {!fetching && (mixed || source === "camera" || personalised || drift) && (
+          <div className="cue-facts">
+            {mixed && <span className="tag">Mixed {blendLine}</span>}
+            {source === "camera" && <span className="tag">From your face</span>}
+            {source === "ambient" && <span className="tag">Ambient read</span>}
+            {personalised && <span className="tag">Tuned to your skips</span>}
+            {drift && <span className="tag tag-live">{drift}</span>}
+          </div>
+        )}
 
         {error && (
           <p className="note note-stop" role="alert">
@@ -138,7 +180,7 @@ const Home = () => {
         )}
 
         {!fetching && songs.length > 0 && (
-          <TrackList tracks={songs} layout="rail" showMood={false} />
+          <TrackList tracks={songs} layout="rail" showMood={mixed} />
         )}
       </section>
     </div>

@@ -3,36 +3,75 @@ import axios from "axios";
 export const API_BASE =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+/**
+ * An anonymous per-browser id. It lets the server learn what you skip and
+ * save without anyone having to make an account.
+ */
+export function clientId() {
+  try {
+    let id = window.localStorage.getItem("mp:client");
+    if (!id) {
+      id =
+        window.crypto?.randomUUID?.() ||
+        `c-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.localStorage.setItem("mp:client", id);
+    }
+    return id;
+  } catch {
+    return "anonymous";
+  }
+}
+
 export const client = axios.create({ baseURL: API_BASE, timeout: 20000 });
+
+client.interceptors.request.use((config) => {
+  config.headers["X-Client-Id"] = clientId();
+  return config;
+});
 
 export const MOODS = ["happy", "sad", "angry", "neutral"];
 
 export const MOOD_COPY = {
-  happy: {
-    line: "Bhangra and party sets, for when the volume should go up.",
-    verb: "Turn it up",
-  },
-  sad: {
-    line: "Slow Punjabi ballads, for when the room has gone quiet.",
-    verb: "Sit with it",
-  },
-  angry: {
-    line: "Punjabi rap with its teeth out.",
-    verb: "Let it out",
-  },
-  neutral: {
-    line: "An even mix that doesn't push you either way.",
-    verb: "Just play",
-  },
+  happy: { line: "Bhangra and party sets, for when the volume should go up." },
+  sad: { line: "Slow Punjabi ballads, for when the room has gone quiet." },
+  angry: { line: "Punjabi rap with its teeth out." },
+  neutral: { line: "An even mix that doesn't push you either way." },
 };
 
-/** A track's id — library rows have one, JioSaavn results don't. */
+/** A track's id — library rows have one, provider results don't. */
 export const trackKey = (track) =>
   track?._id || track?.audio || `${track?.title}::${track?.artist}`;
 
-export async function fetchMoodSongs(mood) {
-  const { data } = await client.get("/songs", { params: { mood } });
-  return Array.isArray(data.songs) ? data.songs : [];
+/** Human summary of a blend: "mostly neutral, some happy". */
+export function describeBlend(blend) {
+  if (!blend || blend.length === 0) return "";
+  if (blend.length === 1) return `all ${blend[0].mood}`;
+  const [lead, ...rest] = blend;
+  const tail = rest.map((p) => `${Math.round(p.share * 100)}% ${p.mood}`);
+  return `${Math.round(lead.share * 100)}% ${lead.mood}, ${tail.join(", ")}`;
+}
+
+/**
+ * Tracks for a reading. Pass the full score distribution and the server
+ * builds a blended playlist; pass a single mood for the plain version.
+ */
+export async function fetchMoodSongs(mood, scores) {
+  const params = { limit: 24 };
+  if (scores) {
+    const blend = MOODS.filter((m) => (scores[m] || 0) >= 0.08)
+      .map((m) => `${m}:${scores[m].toFixed(3)}`)
+      .join(",");
+    if (blend) params.blend = blend;
+  }
+  if (!params.blend) params.mood = mood;
+
+  const { data } = await client.get("/songs", { params });
+  return {
+    songs: Array.isArray(data.songs) ? data.songs : [],
+    blend: data.blend || null,
+    source: data.source || null,
+    personalised: Boolean(data.personalised),
+  };
 }
 
 export async function fetchLibrary({ q = "", mood = "", page = 1 } = {}) {
@@ -47,6 +86,16 @@ export async function fetchLibrary({ q = "", mood = "", page = 1 } = {}) {
 export async function fetchMoodCounts() {
   const { data } = await client.get("/moods");
   return data.moods || {};
+}
+
+/** Fire-and-forget: the interface should never wait on a signal. */
+export function sendSignal({ title, artist, mood, signal }) {
+  if (!title) return;
+  client
+    .post("/feedback", { title, artist, mood, signal })
+    .catch(() => {
+      /* a lost signal is not worth interrupting anyone over */
+    });
 }
 
 export function readError(err, fallback) {

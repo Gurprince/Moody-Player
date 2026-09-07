@@ -46,3 +46,19 @@
     padding-top: 5.5rem;
   }
 }
+
+/* ---------------- what shaped this playlist ---------------- */
+
+.cue-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.tag-live {
+  color: #000;
+  background: var(--accent);
+  border-color: var(--accent);
+  text-transform: none;
+}

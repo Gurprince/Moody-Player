@@ -1,103 +1,94 @@
-// src/routes/song.route.js
 const express = require("express");
-const axios = require("axios");
 const multer = require("multer");
 const songModel = require("../models/songs.model");
+const feedbackModel = require("../models/feedback.model");
 const uploadFile = require("../service/storage.service");
+const {
+  MOODS,
+  PLAYABLE,
+  tracksForMood,
+  tracksForBlend,
+} = require("../service/catalog.service");
+const { rank, trackKey } = require("../service/ranking.service");
+const { sourceHealth } = require("../service/sources");
+const rateLimit = require("../middleware/rateLimit");
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
-
-const MOODS = ["happy", "sad", "angry", "neutral"];
-
-/* Rows without an audio URL are dead weight from earlier imports; the
-   library never counts or serves them. */
-const PLAYABLE = { audio: { $nin: [null, ""] } };
-
-const ESCAPE_ME = "^$.*+?()[]{}|" + String.fromCharCode(92);
-function escapeRegex(value) {
-  return value
-    .split("")
-    .map((c) => (ESCAPE_ME.includes(c) ? String.fromCharCode(92) + c : c))
-    .join("");
-}
-
-// Mood → JioSaavn query keywords
-const moodMappings = {
-  neutral: "punjabi mix",
-  angry: "punjabi rap",
-  sad: "sad punjabi",
-  happy: "punjabi party",
-};
-
-function mapJioSaavnTrack(track, mood) {
-  return {
-    title: track.name || "Unknown",
-    artist: track.primaryArtists || "Unknown",
-    audio: track.downloadUrl?.[track.downloadUrl.length - 1]?.link || "",
-    songCover: track.image?.[track.image.length - 1]?.link || "",
-    mood,
-  };
-}
-
-/* ------------------------------------------------------------------
-   GET /songs?mood=happy — tracks for a mood, fresh from JioSaavn when
-   it answers, from the cached library when it doesn't.
-   ------------------------------------------------------------------ */
-router.get("/songs", async (req, res) => {
-  try {
-    const { mood } = req.query;
-
-    if (!mood || !moodMappings[mood]) {
-      return res.status(400).json({
-        message: "Pick one of: happy, sad, angry, neutral.",
-      });
-    }
-
-    const query = moodMappings[mood];
-    const saavnUrl = `https://jiosaavn-api.vercel.app/search/songs?query=${encodeURIComponent(
-      query
-    )}`;
-
-    let freshSongs = [];
-    try {
-      const response = await axios.get(saavnUrl, { timeout: 8000 });
-      const tracks = response.data?.data?.results || [];
-
-      for (const track of tracks) {
-        if (!track.downloadUrl || track.downloadUrl.length === 0) continue;
-
-        const songData = mapJioSaavnTrack(track, mood);
-        if (!songData.audio) continue;
-
-        freshSongs.push(songData);
-
-        await songModel.findOneAndUpdate(
-          { title: songData.title, artist: songData.artist },
-          songData,
-          { upsert: true }
-        );
-      }
-    } catch (apiErr) {
-      console.warn("JioSaavn unavailable, serving the library:", apiErr.message);
-    }
-
-    if (freshSongs.length === 0) {
-      freshSongs = await songModel.find({ mood, ...PLAYABLE }).limit(20).lean();
-    }
-
-    res.status(200).json({
-      message: "Songs fetched successfully",
-      songs: freshSongs.filter((s) => s.audio),
-    });
-  } catch (err) {
-    console.error("Error fetching songs:", err.message);
-    res.status(500).json({ message: "Couldn't reach the song library." });
-  }
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
 });
 
+const escapeRegex = (value) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, (c) => `\\${c}`);
+
+/** The browser sends an anonymous id so taste can be learned without accounts. */
+const clientOf = (req) => req.get("X-Client-Id") || null;
+
+/** "happy:0.6,neutral:0.4" → { happy: 0.6, neutral: 0.4 } */
+function parseBlend(raw) {
+  if (!raw) return null;
+  const weights = {};
+  for (const part of String(raw).split(",")) {
+    const [mood, value] = part.split(":");
+    const key = (mood || "").trim();
+    const num = Number(value);
+    if (MOODS.includes(key) && Number.isFinite(num) && num > 0) {
+      weights[key] = num;
+    }
+  }
+  return Object.keys(weights).length ? weights : null;
+}
+
 /* ------------------------------------------------------------------
-   GET /library?q=&mood=&page=&limit= — the saved library, searchable.
+   GET /songs?mood=happy
+   GET /songs?blend=neutral:0.7,happy:0.2
+   ------------------------------------------------------------------ */
+router.get(
+  "/songs",
+  rateLimit({ windowMs: 60_000, max: 40, name: "search" }),
+  async (req, res) => {
+    try {
+      const blend = parseBlend(req.query.blend);
+      const { mood } = req.query;
+
+      if (!blend && !MOODS.includes(mood)) {
+        return res.status(400).json({
+          message: "Pass mood=happy|sad|angry|neutral, or blend=mood:weight,…",
+        });
+      }
+
+      const limit = Math.min(Number(req.query.limit) || 24, 40);
+      const result = blend
+        ? await tracksForBlend(blend, { limit })
+        : await tracksForMood(mood, { limit });
+
+      const topMood = blend
+        ? Object.entries(blend).sort((a, b) => b[1] - a[1])[0][0]
+        : mood;
+
+      const ranked = await rank(result.tracks, {
+        client: clientOf(req),
+        mood: topMood,
+      });
+
+      res.status(200).json({
+        songs: ranked.tracks,
+        mood: topMood,
+        blend: result.blend || null,
+        source: result.source,
+        cached: Boolean(result.cached),
+        personalised: ranked.personalised,
+      });
+    } catch (err) {
+      console.error("[/songs]", err.message);
+      res.status(500).json({ message: "Couldn't reach the song library." });
+    }
+  }
+);
+
+/* ------------------------------------------------------------------
+   GET /library?q=&mood=&page=&limit=
    ------------------------------------------------------------------ */
 router.get("/library", async (req, res) => {
   try {
@@ -106,7 +97,7 @@ router.get("/library", async (req, res) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 24, 1), 60);
 
     const filter = { ...PLAYABLE };
-    if (mood && MOODS.includes(mood)) filter.mood = mood;
+    if (MOODS.includes(mood)) filter.mood = mood;
     if (q.trim()) {
       const rx = new RegExp(escapeRegex(q.trim()), "i");
       filter.$or = [{ title: rx }, { artist: rx }];
@@ -130,13 +121,13 @@ router.get("/library", async (req, res) => {
       hasMore: page * limit < total,
     });
   } catch (err) {
-    console.error("Error reading library:", err.message);
+    console.error("[/library]", err.message);
     res.status(500).json({ message: "Couldn't read the library." });
   }
 });
 
 /* ------------------------------------------------------------------
-   GET /moods — how many tracks sit under each mood.
+   GET /moods — how many tracks sit under each mood
    ------------------------------------------------------------------ */
 router.get("/moods", async (req, res) => {
   try {
@@ -150,16 +141,79 @@ router.get("/moods", async (req, res) => {
     });
     res.status(200).json({ moods: counts });
   } catch (err) {
-    console.error("Error counting moods:", err.message);
+    console.error("[/moods]", err.message);
     res.status(500).json({ message: "Couldn't count the library." });
   }
 });
 
 /* ------------------------------------------------------------------
-   POST /songs — add a track to the library.
+   POST /feedback — one signal about one track in one mood
+   ------------------------------------------------------------------ */
+router.post(
+  "/feedback",
+  rateLimit({ windowMs: 60_000, max: 240, name: "signal" }),
+  async (req, res) => {
+    try {
+      const client = clientOf(req) || req.body.client;
+      const { title, artist, mood, signal } = req.body;
+
+      if (!client) return res.status(400).json({ message: "Missing client id." });
+      if (!["save", "unsave", "play", "skip", "down"].includes(signal)) {
+        return res.status(400).json({ message: "Unknown signal." });
+      }
+      if (!title) return res.status(400).json({ message: "Missing track." });
+
+      await feedbackModel.create({
+        client,
+        trackKey: trackKey({ title, artist }),
+        title,
+        artist,
+        mood: MOODS.includes(mood) ? mood : "neutral",
+        signal,
+      });
+
+      res.status(201).json({ ok: true });
+    } catch (err) {
+      console.error("[/feedback]", err.message);
+      res.status(500).json({ message: "Couldn't record that." });
+    }
+  }
+);
+
+/* ------------------------------------------------------------------
+   GET /taste — what this browser's signals add up to
+   ------------------------------------------------------------------ */
+router.get("/taste", async (req, res) => {
+  try {
+    const client = clientOf(req);
+    if (!client) return res.status(200).json({ moods: {}, total: 0 });
+
+    const rows = await feedbackModel.aggregate([
+      { $match: { client } },
+      { $group: { _id: { mood: "$mood", signal: "$signal" }, n: { $sum: 1 } } },
+    ]);
+
+    const moods = {};
+    let total = 0;
+    for (const row of rows) {
+      const { mood, signal } = row._id;
+      moods[mood] = moods[mood] || { save: 0, play: 0, skip: 0, down: 0, unsave: 0 };
+      moods[mood][signal] = row.n;
+      total += row.n;
+    }
+    res.status(200).json({ moods, total });
+  } catch (err) {
+    console.error("[/taste]", err.message);
+    res.status(500).json({ message: "Couldn't read your signals." });
+  }
+});
+
+/* ------------------------------------------------------------------
+   POST /songs — add a track to the library
    ------------------------------------------------------------------ */
 router.post(
   "/songs",
+  rateLimit({ windowMs: 60_000, max: 10, name: "upload" }),
   upload.fields([
     { name: "audio", maxCount: 1 },
     { name: "cover", maxCount: 1 },
@@ -172,7 +226,8 @@ router.post(
 
       if (!title || !artist || !MOODS.includes(mood)) {
         return res.status(400).json({
-          message: "Title, artist and one of happy/sad/angry/neutral are required.",
+          message:
+            "Title, artist and one of happy/sad/angry/neutral are required.",
         });
       }
       if (!audioFile) {
@@ -190,14 +245,33 @@ router.post(
         mood,
         audio: audioUpload.url,
         songCover: coverUpload?.url || "",
+        source: "upload",
+        preview: false,
       });
 
       res.status(201).json({ message: "Track added", song });
     } catch (err) {
-      console.error("Upload failed:", err.message);
+      console.error("[POST /songs]", err.message);
       res.status(500).json({ message: "The upload didn't finish. Try again." });
     }
   }
 );
+
+/* ------------------------------------------------------------------
+   GET /health — which providers are answering
+   ------------------------------------------------------------------ */
+router.get("/health", async (req, res) => {
+  let library = null;
+  try {
+    library = await songModel.countDocuments(PLAYABLE);
+  } catch {
+    library = null;
+  }
+  res.status(200).json({
+    ok: true,
+    library,
+    sources: sourceHealth(),
+  });
+});
 
 module.exports = router;

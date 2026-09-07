@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import TrackList from "../components/TrackList.jsx";
+import MoodJournal from "../components/MoodJournal.jsx";
 import { usePlayer } from "../context/usePlayer.js";
 import { sinceNow } from "../components/trackHelpers.js";
 import "./Saved.css";
@@ -21,6 +22,8 @@ const Saved = () => {
           </p>
         </div>
       </div>
+
+      <MoodJournal history={history} />
 
       <div className="saved-deck">
         <section>

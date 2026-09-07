@@ -87,6 +87,10 @@
   color: var(--accent);
 }
 
+.dock-down:hover {
+  color: var(--stop);
+}
+
 .dock-one {
   position: absolute;
   right: 0.15rem;
