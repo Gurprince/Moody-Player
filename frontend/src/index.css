@@ -292,6 +292,16 @@ button:disabled {
   gap: 0.75rem;
 }
 
+/* a labelled form control — shared by every page that has a form */
+.field {
+  display: grid;
+  gap: 0.5rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
 .note {
   padding: 0.85rem 1.1rem;
   border-radius: var(--card);

@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import { PlayerContext } from "./usePlayer.js";
 import useStoredState from "../hooks/useStoredState.js";
-import { trackKey, sendSignal } from "../api.js";
+import { trackKey, sendSignal, pushSaved, pushReadings } from "../api.js";
+import { useAuth } from "./authContext.js";
 
 const REPEAT_STATES = ["off", "all", "one"];
 
@@ -24,6 +25,8 @@ function shuffled(length, first) {
 const identity = (length) => Array.from({ length }, (_, i) => i);
 
 export function PlayerProvider({ children }) {
+  const { user, remote } = useAuth();
+
   const audioRef = useRef(null);
   if (audioRef.current === null && typeof Audio !== "undefined") {
     audioRef.current = new Audio();
@@ -58,6 +61,41 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     queueRef.current = queue;
   }, [queue]);
+
+  /* ---------------- account sync ----------------
+     Signed out, bookmarks and the journal live in this browser. Signing in
+     hands them to the account; signing out takes them back off the device so
+     the next person here doesn't inherit them. */
+
+  const hydrating = useRef(false);
+
+  useEffect(() => {
+    if (!remote) return;
+    hydrating.current = true;
+    setSaved(Array.isArray(remote.saved) ? remote.saved : []);
+    setHistory(Array.isArray(remote.readings) ? remote.readings : []);
+  }, [remote, setSaved, setHistory]);
+
+  useEffect(() => {
+    if (hydrating.current) {
+      // don't bounce freshly-hydrated data straight back at the server
+      hydrating.current = false;
+      return undefined;
+    }
+    if (!user) return undefined;
+    const timer = setTimeout(() => {
+      pushSaved(saved).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [saved, user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const timer = setTimeout(() => {
+      pushReadings(history).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [history, user]);
 
   /* ---------------- audio element wiring ---------------- */
 
@@ -380,6 +418,7 @@ export function PlayerProvider({ children }) {
     saved,
     history,
     mood,
+    user,
     play,
     playTrack,
     enqueue,

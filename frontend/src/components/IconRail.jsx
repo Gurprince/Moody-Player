@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { FiActivity, FiDisc, FiBookmark, FiPlus } from "react-icons/fi";
+import { FiActivity, FiDisc, FiBookmark, FiPlus, FiUser } from "react-icons/fi";
 import { usePlayer } from "../context/usePlayer.js";
+import { useAuth } from "../context/authContext.js";
 import "./IconRail.css";
 
 const LINKS = [
@@ -9,10 +10,12 @@ const LINKS = [
   { to: "/library", label: "Library", key: "l", icon: FiDisc },
   { to: "/saved", label: "Saved", key: "s", icon: FiBookmark },
   { to: "/upload", label: "Add", key: "a", icon: FiPlus },
+  { to: "/account", label: "Account", key: "u", icon: FiUser },
 ];
 
 const IconRail = () => {
   const { saved } = usePlayer();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   /* Single-letter jumps, the way the rail advertises them. */
@@ -51,7 +54,8 @@ const IconRail = () => {
               <b className="rail-key">{link.key.toUpperCase()}</b>
               {link.label}
             </span>
-            {link.to === "/saved" && saved.length > 0 && (
+            {((link.to === "/saved" && saved.length > 0) ||
+              (link.to === "/account" && user)) && (
               <i className="rail-dot" aria-hidden="true" />
             )}
             <span className="visually-hidden">{link.label}</span>

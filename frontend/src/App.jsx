@@ -8,12 +8,13 @@ const Home = lazy(() => import("./pages/Home.jsx"));
 const Library = lazy(() => import("./pages/Library.jsx"));
 const Saved = lazy(() => import("./pages/Saved.jsx"));
 const Upload = lazy(() => import("./pages/Upload.jsx"));
+const Account = lazy(() => import("./pages/Account.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 import { MOODS } from "./api.js";
 import "./App.css";
 
 const App = () => {
-  const { mood, track } = usePlayer();
+  const { mood, track, user } = usePlayer();
   const location = useLocation();
 
   /* The mood the site is in tints every page, so it lives on the root. */
@@ -42,6 +43,7 @@ const App = () => {
           <Route path="/library" element={<Library />} />
           <Route path="/saved" element={<Saved />} />
           <Route path="/upload" element={<Upload />} />
+          <Route path="/account" element={<Account />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
@@ -51,8 +53,10 @@ const App = () => {
         <div className="colophon-inner">
           <p className="colophon-note">
             Expressions are read in your browser and never leave this device.
-            Only the mood word is sent to find music. Saved tracks and past
-            readings stay in this browser too.
+            Only the mood word is sent to find music.{" "}
+            {user
+              ? "Bookmarks and readings are synced to your account."
+              : "Saved tracks and past readings stay in this browser too."}
           </p>
 
           <nav className="colophon-nav colophon-moods" aria-label="Moods">
@@ -71,6 +75,7 @@ const App = () => {
             <Link to="/library">Library</Link>
             <Link to="/saved">Saved</Link>
             <Link to="/upload">Add a track</Link>
+            <Link to="/account">Account</Link>
           </nav>
         </div>
       </footer>

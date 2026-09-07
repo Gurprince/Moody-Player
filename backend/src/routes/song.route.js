@@ -12,6 +12,7 @@ const {
 const { rank, trackKey } = require("../service/ranking.service");
 const { sourceHealth } = require("../service/sources");
 const rateLimit = require("../middleware/rateLimit");
+const { ownerOf } = require("../middleware/auth");
 
 const router = express.Router();
 const upload = multer({
@@ -22,8 +23,8 @@ const upload = multer({
 const escapeRegex = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, (c) => `\\${c}`);
 
-/** The browser sends an anonymous id so taste can be learned without accounts. */
-const clientOf = (req) => req.get("X-Client-Id") || null;
+/** Signed in, taste belongs to the account; signed out, to the browser id. */
+const clientOf = ownerOf;
 
 /** "happy:0.6,neutral:0.4" → { happy: 0.6, neutral: 0.4 } */
 function parseBlend(raw) {
@@ -165,6 +166,7 @@ router.post(
 
       await feedbackModel.create({
         client,
+        user: req.user?._id,
         trackKey: trackKey({ title, artist }),
         title,
         artist,

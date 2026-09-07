@@ -8,6 +8,8 @@ const mongoose = require("mongoose");
 const feedbackSchema = new mongoose.Schema(
   {
     client: { type: String, required: true, index: true },
+    // set once the signals belong to an account rather than a browser
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "user", index: true },
     trackKey: { type: String, required: true, index: true },
     title: String,
     artist: String,

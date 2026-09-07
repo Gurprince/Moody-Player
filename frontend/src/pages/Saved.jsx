@@ -9,7 +9,7 @@ import "./Saved.css";
 const HOW = { camera: "read from your face", picked: "picked by hand" };
 
 const Saved = () => {
-  const { saved, history, play, clearHistory } = usePlayer();
+  const { saved, history, play, clearHistory, user } = usePlayer();
 
   return (
     <div className="page saved">
@@ -17,8 +17,9 @@ const Saved = () => {
         <div>
           <h1 className="display">Saved</h1>
           <p className="lede">
-            Tracks you bookmarked, and the moods this browser has read before.
-            Both stay on this device.
+            {user
+              ? "Tracks you bookmarked and the moods you've read, synced to your account."
+              : "Tracks you bookmarked, and the moods this browser has read before. Both stay on this device."}
           </p>
         </div>
       </div>

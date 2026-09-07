@@ -23,6 +23,9 @@ sent to the server to look up music.
   the browser holds an anonymous id.
 - **Journal** — every reading charted over time, with a weekday breakdown and a
   table view.
+- **Accounts** — optional email and password. Everything works signed out, on one
+  device; sign in and your bookmarks, journal and taste follow you anywhere. Whatever
+  the browser collected beforehand moves onto the account on the way in.
 - **Library** — everything collected so far, searchable and filterable by mood.
 - **Player** — a persistent dock with queue, shuffle, repeat, volume and seeking
   that keeps playing as you move between pages.
@@ -73,6 +76,26 @@ Set `VITE_API_URL` in `frontend/.env` if the API isn't on `http://localhost:3000
 | `POST` | `/feedback` | One signal (save / unsave / play / skip / down) about a track |
 | `GET` | `/taste` | What this browser's signals add up to |
 | `POST` | `/songs` | Add a track (multipart: title, artist, mood, audio, cover) |
+| `POST` | `/auth/register` | Create an account, adopting this browser's data |
+| `POST` | `/auth/login` | Sign in, adopting this browser's data |
+| `POST` | `/auth/logout` | Clear the session |
+| `GET` | `/auth/me` | The signed-in user, with their bookmarks and journal |
+| `PUT` | `/me/saved` | Replace the account's bookmarks |
+| `PUT` | `/me/readings` | Replace the account's journal |
 
-Requests carry an `X-Client-Id` header — an anonymous per-browser id used to
-personalise ranking. Search and upload endpoints are rate limited.
+Signed out, requests carry an `X-Client-Id` header — an anonymous per-browser id
+that personalises ranking without an account. Signing in moves those signals onto
+the account and the id stops being used. Search, upload and sign-in endpoints are
+rate limited.
+
+## Accounts and sessions
+
+Passwords are hashed with bcrypt (12 rounds) and the session travels in an
+httpOnly, sameSite cookie, so page scripts can never read the token. Because the
+cookie is credentialed, the API names its allowed origin explicitly — set
+`FRONTEND_URL` to wherever the frontend runs (comma-separate several). Sign-in
+failures return one message whether or not the email exists, so the endpoint
+can't be used to discover who has an account.
+
+Signing out clears bookmarks and the journal from the device — they stay on the
+account — so the next person at a shared browser doesn't inherit them.

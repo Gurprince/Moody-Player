@@ -22,7 +22,11 @@ export function clientId() {
   }
 }
 
-export const client = axios.create({ baseURL: API_BASE, timeout: 20000 });
+export const client = axios.create({
+  baseURL: API_BASE,
+  timeout: 20000,
+  withCredentials: true, // carries the httpOnly session cookie
+});
 
 client.interceptors.request.use((config) => {
   config.headers["X-Client-Id"] = clientId();
@@ -100,4 +104,40 @@ export function sendSignal({ title, artist, mood, signal }) {
 
 export function readError(err, fallback) {
   return err?.response?.data?.message || fallback;
+}
+
+/* ------------------------------------------------------------------
+   Accounts
+   ------------------------------------------------------------------ */
+
+/** Who is signed in, plus their synced bookmarks and journal. */
+export async function fetchMe() {
+  const { data } = await client.get("/auth/me");
+  return data;
+}
+
+/**
+ * Register or sign in, handing over whatever this browser collected while
+ * signed out so none of it is lost.
+ */
+export async function authenticate(mode, { email, password, saved, readings }) {
+  const { data } = await client.post(`/auth/${mode}`, {
+    email,
+    password,
+    saved,
+    readings,
+  });
+  return data;
+}
+
+export async function signOut() {
+  await client.post("/auth/logout");
+}
+
+export function pushSaved(saved) {
+  return client.put("/me/saved", { saved });
+}
+
+export function pushReadings(readings) {
+  return client.put("/me/readings", { readings });
 }
